@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/chat_coach_provider.dart';
-import '../providers/transaction_provider.dart';
+import '../../providers/chat_coach_provider.dart';
+import '../../providers/transaction_provider.dart';
 
 class ChatCoachScreen extends StatefulWidget {
   const ChatCoachScreen({super.key});

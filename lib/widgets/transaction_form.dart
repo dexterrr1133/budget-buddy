@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/settings_provider.dart';
 
 class TransactionForm extends StatefulWidget {
   const TransactionForm({super.key, required this.onSubmit});
@@ -85,6 +88,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
   @override
   Widget build(BuildContext context) {
+    final currencySymbol = context.watch<SettingsProvider>().currencySymbol;
     return Padding(
       padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
       child: Column(
@@ -104,9 +108,9 @@ class _TransactionFormState extends State<TransactionForm> {
           TextField(
             controller: _amountController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Amount',
-              prefixText: '\$',
+              prefixText: currencySymbol,
             ),
           ),
           const SizedBox(height: 12),

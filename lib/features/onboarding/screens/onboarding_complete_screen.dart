@@ -2,11 +2,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
-import '../models/financial_profile.dart';
+import '../models/user_profile_model.dart';
 
 /// Onboarding completion celebration screen
 class OnboardingCompleteScreen extends StatefulWidget {
-  final FinancialProfile profile;
+  final UserProfileModel profile;
 
   const OnboardingCompleteScreen({required this.profile, super.key});
 
@@ -79,35 +79,40 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Animated checkmark circle
-                    ScaleTransition(
-                      scale: Tween<double>(begin: 0.0, end: 1.0).animate(
-                        CurvedAnimation(
-                          parent: _scaleController,
-                          curve: Curves.elasticOut,
-                        ),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.primaryDark],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                    Center(
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.0, end: 1.0).animate(
+                          CurvedAnimation(
+                            parent: _scaleController,
+                            curve: Curves.elasticOut,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.check_rounded,
-                            size: 64,
-                            color: Colors.white,
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primaryDark,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 64,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -231,10 +236,13 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
           ),
           const SizedBox(height: 16),
           _summaryItem('💰 Income', widget.profile.incomeRange ?? 'Not set'),
-          _summaryItem('💸 Style', widget.profile.spendingStyle ?? 'Not set'),
+          _summaryItem(
+            '💸 Advice Tone',
+            widget.profile.preferredAdviceTone ?? 'Not set',
+          ),
           _summaryItem(
             '📊 Risk Level',
-            widget.profile.investmentRisk ?? 'Not set',
+            widget.profile.riskTolerance ?? 'Not set',
           ),
           _summaryItem('💪 Savings', widget.profile.savingsHabit ?? 'Not set'),
           _summaryItem(
@@ -292,7 +300,6 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
         ...[
           ('📱', 'Track Expenses', 'Log and categorize your daily spending'),
           ('🤖', 'AI Advisor', 'Get personalized financial recommendations'),
-          ('💡', 'Smart Budget', 'Create budgets based on your habits'),
         ].map((item) {
           final (emoji, title, description) = item;
           return Padding(

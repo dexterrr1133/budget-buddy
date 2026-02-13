@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Modern bottom navigation bar with four tabs
@@ -30,40 +32,48 @@ class _ModernBottomNavBarState extends State<ModernBottomNavBar> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
-            width: 1,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : Colors.black).withOpacity(
-              isDark ? 0.2 : 0.08,
-            ),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadius.lg),
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(
-              labels.length,
-              (index) => _buildNavItem(
-                context,
-                isDark,
-                index: index,
-                label: labels[index],
-                icon: icons[index],
-                isSelected: widget.selectedIndex == index,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+              width: 1,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : Colors.black).withOpacity(
+                isDark ? 0.2 : 0.08,
+              ),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                labels.length,
+                (index) => _buildNavItem(
+                  context,
+                  isDark,
+                  index: index,
+                  label: labels[index],
+                  icon: icons[index],
+                  isSelected: widget.selectedIndex == index,
+                ),
               ),
             ),
           ),
@@ -85,9 +95,12 @@ class _ModernBottomNavBarState extends State<ModernBottomNavBar> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           color: isSelected
               ? AppColors.primary.withOpacity(0.15)
               : Colors.transparent,
@@ -104,17 +117,16 @@ class _ModernBottomNavBarState extends State<ModernBottomNavBar> {
                         : AppColors.lightTextSecondary),
               size: 24,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               label,
-              style: AppTextStyles.label.copyWith(
+              style: AppTextStyles.caption.copyWith(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: isSelected
                     ? AppColors.primary
                     : (isDark
                           ? AppColors.darkTextSecondary
                           : AppColors.lightTextSecondary),
-                fontSize: 10,
               ),
             ),
           ],

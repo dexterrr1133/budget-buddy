@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Monthly budget summary card showing safe to spend and total budget
@@ -58,7 +61,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
 
   Color _getProgressColor() {
     if (_percentageUsed < 0.7) return AppColors.income;
-    if (_percentageUsed < 0.9) return Colors.orange;
+    if (_percentageUsed < 0.9) return AppColors.warning;
     return AppColors.expense;
   }
 
@@ -74,9 +77,12 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
       child: FadeTransition(
         opacity: _controller,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+            vertical: AppSpacing.lg,
+          ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             border: Border.all(
               color: isDark
@@ -84,18 +90,10 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                   : AppColors.lightDivider,
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: (isDark ? Colors.black : Colors.black).withOpacity(
-                  isDark ? 0.15 : 0.05,
-                ),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppShadows.card(isDark),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.xxl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -115,7 +113,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                                   : AppColors.lightTextSecondary,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             _formatAmount(_safeToSpend),
                             style: AppTextStyles.headlineMedium.copyWith(
@@ -141,7 +139,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                                   : AppColors.lightTextSecondary,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             _formatAmount(widget.totalBudget),
                             style: AppTextStyles.headlineMedium.copyWith(
@@ -156,7 +154,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
                 // Progress bar
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,7 +185,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     // Animated progress bar
                     AnimatedBuilder(
                       animation: _controller,
@@ -195,7 +193,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                         return Container(
                           height: 8,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             color: isDark
                                 ? AppColors.darkDivider
                                 : AppColors.lightDivider,
@@ -207,7 +205,9 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                                     _percentageUsed * _controller.value,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
                                     color: _getProgressColor(),
                                     boxShadow: [
                                       BoxShadow(

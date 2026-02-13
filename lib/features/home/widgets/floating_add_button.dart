@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Floating action button for adding transactions
@@ -40,22 +42,14 @@ class _FloatingAddButtonState extends State<FloatingAddButton>
         end: 1.0,
       ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut)),
       child: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+        decoration: BoxDecoration(boxShadow: AppShadows.floating),
         child: FloatingActionButton.extended(
           onPressed: widget.onPressed,
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 8,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           icon: const Icon(Icons.add_rounded, size: 24),
           label: Text(

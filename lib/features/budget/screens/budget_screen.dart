@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../onboarding/providers/user_profile_provider.dart';
 import '../controllers/budget_controller.dart';
-import '../widgets/budget_header_widget.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../widgets/category_budget_card.dart';
-import '../widgets/budget_bottom_nav_bar.dart';
+import '../../home/widgets/modern_bottom_nav_bar.dart';
 import '../../home/widgets/floating_add_button.dart';
 
 /// Modern budget tracking screen
@@ -21,56 +25,21 @@ class _BudgetScreenState extends State<BudgetScreen> {
   late BudgetController _controller;
   final ScrollController _scrollController = ScrollController();
 
-  // Mock data
-  final String userName = 'Lance';
-  final double totalBudget = 50000.00;
-  final double amountSpent = 28420.75;
-
-  // Mock categories
-  final List<Map<String, dynamic>> categories = [
-    {
-      'name': 'Food & Dining',
-      'spent': 8500.00,
-      'limit': 10000.00,
+  // Category definitions with icons and colors
+  final Map<String, Map<String, dynamic>> categoryDefinitions = {
+    'Food & Dining': {
       'icon': Icons.restaurant,
       'color': const Color(0xFFFF6B6B),
     },
-    {
-      'name': 'Transportation',
-      'spent': 3200.00,
-      'limit': 5000.00,
+    'Transportation': {
       'icon': Icons.directions_car,
       'color': const Color(0xFF4ECDC4),
     },
-    {
-      'name': 'Entertainment',
-      'spent': 4100.00,
-      'limit': 5000.00,
-      'icon': Icons.movie,
-      'color': const Color(0xFFFFE66D),
-    },
-    {
-      'name': 'Shopping',
-      'spent': 5620.75,
-      'limit': 8000.00,
-      'icon': Icons.shopping_bag,
-      'color': const Color(0xFFC44569),
-    },
-    {
-      'name': 'Utilities',
-      'spent': 3000.00,
-      'limit': 4000.00,
-      'icon': Icons.bolt,
-      'color': const Color(0xFF95E1D3),
-    },
-    {
-      'name': 'Education',
-      'spent': 2000.00,
-      'limit': 8000.00,
-      'icon': Icons.school,
-      'color': const Color(0xFF6C5CE7),
-    },
-  ];
+    'Entertainment': {'icon': Icons.movie, 'color': const Color(0xFFFFE66D)},
+    'Shopping': {'icon': Icons.shopping_bag, 'color': const Color(0xFFC44569)},
+    'Utilities': {'icon': Icons.bolt, 'color': const Color(0xFF95E1D3)},
+    'Education': {'icon': Icons.school, 'color': const Color(0xFF6C5CE7)},
+  };
 
   @override
   void initState() {
@@ -98,24 +67,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return DateFormat('MMMM yyyy').format(DateTime.now());
   }
 
-  void _onNotificationTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notifications feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _onFilterTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Filter options coming soon'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _onAddTransactionTap() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -139,12 +90,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         break;
       case 2:
         // Activity tab - TODO: Navigate to activity screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Activity feature coming soon'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        Navigator.pushNamed(context, '/activity');
         break;
       case 3:
         // Advisor tab - Navigate to chat advisor
@@ -158,6 +104,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final profile = context.watch<UserProfileProvider>().profile;
+    final userName = profile?.userName ?? 'Friend';
+
+    // Get data from profile survey
+    final monthlyBudget = profile?.monthlyBudget ?? 50000.00;
+    final currentFunds = profile?.currentFunds ?? 0.00;
+    final spendingCategories = profile?.spendingCategories ?? [];
+
+    // Build categories list from survey data
+    final categories = _buildCategoriesFromSurvey(spendingCategories);
+
+    // Calculate total spent from categories
+    final totalSpent = categories.fold<double>(
+      0.0,
+      (sum, category) => sum + (category['spent'] as double? ?? 0.0),
+    );
 
     return Scaffold(
       backgroundColor: isDark
@@ -166,58 +128,66 @@ class _BudgetScreenState extends State<BudgetScreen> {
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
-          return Stack(
-            children: [
-              // Main scrollable content
-              CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  // Header
-                  SliverAppBar(
-                    floating: true,
-                    elevation: 0,
-                    backgroundColor: isDark
-                        ? AppColors.darkBackground
-                        : AppColors.lightBackground,
-                    automaticallyImplyLeading: false,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: BudgetHeaderWidget(
-                        userName: userName,
-                        onNotificationTap: _onNotificationTap,
-                        onFilterTap: _onFilterTap,
+          return SafeArea(
+            child: Stack(
+              children: [
+                // Main scrollable content
+                CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    // Header
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.screenPadding,
+                          AppSpacing.headerTop,
+                          AppSpacing.screenPadding,
+                          AppSpacing.lg,
+                        ),
+                        child: _BudgetHeader(
+                          userName: userName,
+                          screenTitle: 'Budget Overview',
+                        ),
                       ),
                     ),
-                  ),
-                  // Content
-                  SliverToBoxAdapter(
-                    child: _controller.isLoading
-                        ? _buildLoadingState(isDark)
-                        : _buildMainContent(isDark),
-                  ),
-                  // Bottom spacing for FAB and nav
-                  const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-                ],
-              ),
-              // Floating Add Button
-              Positioned(
-                bottom: 120,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: FloatingAddButton(onPressed: _onAddTransactionTap),
+                    // Content
+                    SliverToBoxAdapter(
+                      child: _controller.isLoading
+                          ? _buildLoadingState(isDark)
+                          : _buildMainContent(
+                              isDark,
+                              categories,
+                              monthlyBudget,
+                              totalSpent,
+                            ),
+                    ),
+                    // Bottom spacing for FAB and nav
+                    const SliverPadding(
+                      padding: EdgeInsets.only(bottom: AppSpacing.navClearance),
+                    ),
+                  ],
                 ),
-              ),
-              // Bottom Navigation
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: BudgetBottomNavBar(
-                  selectedIndex: _controller.selectedNavIndex,
-                  onTabChanged: _onNavTabChanged,
+                // Floating Add Button
+                Positioned(
+                  bottom: AppSpacing.fabOffset,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: FloatingAddButton(onPressed: _onAddTransactionTap),
+                  ),
                 ),
-              ),
-            ],
+                // Bottom Navigation
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: ModernBottomNavBar(
+                    selectedIndex: _controller.selectedNavIndex,
+                    onTabChanged: _onNavTabChanged,
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -257,44 +227,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
-  Widget _buildMainContent(bool isDark) {
+  Widget _buildMainContent(
+    bool isDark,
+    List<Map<String, dynamic>> categories,
+    double monthlyBudget,
+    double totalSpent,
+  ) {
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-          // Monthly Budget Title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Monthly Budget',
-                  style: AppTextStyles.headlineLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _getCurrentMonthYear(),
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
           // Monthly Summary Card
           MonthlySummaryCard(
-            totalBudget: totalBudget,
-            amountSpent: amountSpent,
+            totalBudget: monthlyBudget,
+            amountSpent: totalSpent,
             monthYear: _getCurrentMonthYear(),
           ),
 
@@ -329,6 +277,171 @@ class _BudgetScreenState extends State<BudgetScreen> {
           const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  List<Map<String, dynamic>> _buildCategoriesFromSurvey(
+    List<String> spendingCategories,
+  ) {
+    final List<Map<String, dynamic>> result = [];
+
+    // Default category allocation if no spending categories from survey
+    if (spendingCategories.isEmpty) {
+      return [
+        {
+          'name': 'Food & Dining',
+          'spent': 8500.00,
+          'limit': 10000.00,
+          'icon':
+              categoryDefinitions['Food & Dining']?['icon'] ?? Icons.restaurant,
+          'color':
+              categoryDefinitions['Food & Dining']?['color'] ??
+              const Color(0xFFFF6B6B),
+        },
+        {
+          'name': 'Transportation',
+          'spent': 3200.00,
+          'limit': 5000.00,
+          'icon':
+              categoryDefinitions['Transportation']?['icon'] ??
+              Icons.directions_car,
+          'color':
+              categoryDefinitions['Transportation']?['color'] ??
+              const Color(0xFF4ECDC4),
+        },
+        {
+          'name': 'Entertainment',
+          'spent': 4100.00,
+          'limit': 5000.00,
+          'icon': categoryDefinitions['Entertainment']?['icon'] ?? Icons.movie,
+          'color':
+              categoryDefinitions['Entertainment']?['color'] ??
+              const Color(0xFFFFE66D),
+        },
+      ];
+    }
+
+    // Build categories from survey data
+    for (int i = 0; i < spendingCategories.length; i++) {
+      final categoryName = spendingCategories[i];
+      final definition = categoryDefinitions[categoryName];
+
+      if (definition != null) {
+        // Allocate budget proportionally (simplified)
+        final limitAmount = 10000.00 / spendingCategories.length;
+        final spentAmount = limitAmount * 0.65; // Assume 65% spent
+
+        result.add({
+          'name': categoryName,
+          'spent': spentAmount,
+          'limit': limitAmount,
+          'icon': definition['icon'] as IconData,
+          'color': definition['color'] as Color,
+        });
+      }
+    }
+
+    return result;
+  }
+}
+
+class _BudgetHeader extends StatelessWidget {
+  const _BudgetHeader({required this.userName, required this.screenTitle});
+
+  final String userName;
+  final String screenTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppColors.primaryLight,
+              child: Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'B',
+                style: const TextStyle(
+                  color: AppColors.primaryDark,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome back,',
+                    style: AppTextStyles.label.copyWith(color: textSecondary),
+                  ),
+                  Text(
+                    userName,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.notifications_outlined,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: IconButton(
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/settings'),
+                    icon: Icon(Icons.settings_outlined, color: textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Text(
+          screenTitle,
+          style: AppTextStyles.headlineMedium.copyWith(
+            color: textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

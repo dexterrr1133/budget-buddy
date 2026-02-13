@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/colors.dart';
+import '../../core/theme/radius.dart';
+import '../../core/theme/shadows.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/theme/text_styles.dart';
+import '../../features/home/widgets/modern_bottom_nav_bar.dart';
+import '../../features/onboarding/providers/user_profile_provider.dart';
 import '../../providers/chat_coach_provider.dart';
 import '../../providers/transaction_provider.dart';
 
@@ -26,94 +33,99 @@ class _ChatCoachScreenState extends State<ChatCoachScreen> {
     if (text.isEmpty) return;
 
     final transactions = context.read<TransactionProvider>().items;
+    final profile = context.read<UserProfileProvider>().profile;
     await context.read<ChatCoachProvider>().sendMessage(
-          userMessage: text,
-          transactions: transactions,
-        );
+      userMessage: text,
+      transactions: transactions,
+      profile: profile,
+    );
     _controller.clear();
+  }
+
+  void _onNavTabChanged(int index) {
+    setState(() => _currentIndex = index);
+    switch (index) {
+      case 0:
+        Navigator.of(context).pushNamed('/home');
+        break;
+      case 1:
+        Navigator.of(context).pushNamed('/budget');
+        break;
+      case 2:
+        Navigator.of(context).pushNamed('/activity');
+        break;
+      case 3:
+        break;
+      default:
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final background = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
-      bottomNavigationBar: BottomAppBar(
-        child: SizedBox(
-          height: 64,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  label: 'Home',
-                  icon: Icons.home_outlined,
-                  isActive: _currentIndex == 0,
-                  onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
-                ),
-                _NavItem(
-                  label: 'Budget',
-                  icon: Icons.pie_chart_outline,
-                  isActive: _currentIndex == 1,
-                  onTap: () => Navigator.of(context).pushNamed('/budget'),
-                ),
-                _NavItem(
-                  label: 'Activity',
-                  icon: Icons.list_alt,
-                  isActive: _currentIndex == 2,
-                  onTap: () => Navigator.of(context).pushNamed('/activity'),
-                ),
-                _NavItem(
-                  label: 'Advisor',
-                  icon: Icons.chat_bubble,
-                  isActive: _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = 3),
-                ),
-              ],
-            ),
-          ),
-        ),
+      backgroundColor: background,
+      bottomNavigationBar: ModernBottomNavBar(
+        selectedIndex: _currentIndex,
+        onTabChanged: _onNavTabChanged,
       ),
       body: SafeArea(
         child: Consumer<ChatCoachProvider>(
           builder: (context, provider, _) {
+            final profileProvider = context.watch<UserProfileProvider>();
+            final profile = profileProvider.profile;
+            final showPersonalized = profile?.isComplete ?? false;
+            final userName = profile?.userName ?? 'Friend';
             return Column(
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenPadding,
+                      AppSpacing.headerTop,
+                      AppSpacing.screenPadding,
+                      AppSpacing.lg,
+                    ),
                     children: [
-                      _AdvisorHeader(
-                        onTapNotifications: () {},
+                      _buildStandardHeader(
+                        userName,
+                        'AI Financial Advisor',
+                        isDark,
                       ),
-                      const SizedBox(height: 40),
-                      const Center(
-                        child: Text(
-                          'Today',
-                          style: TextStyle(
-                            color: Color(0xFF9AA3B2),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.lg),
+                      const _DatePill(label: 'Today'),
+                      const SizedBox(height: AppSpacing.md),
                       if (provider.messages.isEmpty)
-                        const _AdvisorBubble(
-                          message:
-                              "Hi! I'm your BudgetBuddy Advisor. 🎓\nAsk me anything about saving money as a student!",
+                        const _AnimatedBubble(
+                          child: _AdvisorBubble(
+                            message:
+                                "Hi! I'm your BudgetBuddy Advisor. 🎓\nAsk me anything about budgeting or saving money.",
+                          ),
                         )
                       else
-                        ...provider.messages.map((msg) => _AdvisorBubble(message: msg.text)),
+                        ...provider.messages.map(
+                          (msg) => _AnimatedBubble(
+                            child: msg.role == 'user'
+                                ? _UserBubble(message: msg.text)
+                                : _AdvisorBubble(message: msg.text),
+                          ),
+                        ),
                       if (provider.isLoading)
                         const Padding(
-                          padding: EdgeInsets.only(top: 12),
+                          padding: EdgeInsets.only(top: AppSpacing.md),
                           child: Row(
                             children: [
                               SizedBox(
                                 height: 16,
                                 width: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                               SizedBox(width: 8),
                               Text('Advisor is thinking...'),
@@ -140,15 +152,126 @@ class _ChatCoachScreenState extends State<ChatCoachScreen> {
       ),
     );
   }
+
+  Widget _buildStandardHeader(
+    String userName,
+    String screenTitle,
+    bool isDark,
+  ) {
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppColors.primaryLight,
+              child: Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'B',
+                style: const TextStyle(
+                  color: AppColors.primaryDark,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome back,',
+                    style: AppTextStyles.label.copyWith(color: textSecondary),
+                  ),
+                  Text(
+                    userName,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.notifications_outlined,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: IconButton(
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/settings'),
+                    icon: Icon(Icons.settings_outlined, color: textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Text(
+          screenTitle,
+          style: AppTextStyles.headlineMedium.copyWith(
+            color: textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _AdvisorHeader extends StatelessWidget {
-  const _AdvisorHeader({required this.onTapNotifications});
+  const _AdvisorHeader({
+    required this.onTapNotifications,
+    required this.showPersonalized,
+    required this.userName,
+  });
 
   final VoidCallback onTapNotifications;
+  final bool showPersonalized;
+  final String userName;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+    final initial = userName.isNotEmpty ? userName[0] : 'B';
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -156,63 +279,152 @@ class _AdvisorHeader extends StatelessWidget {
           children: [
             InkWell(
               onTap: () => Navigator.of(context).pushNamed('/settings'),
-              borderRadius: BorderRadius.circular(24),
-              child: const CircleAvatar(
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              child: CircleAvatar(
                 radius: 22,
-                backgroundColor: Color(0xFFE4E8FF),
+                backgroundColor: AppColors.primaryLight.withOpacity(0.6),
                 child: Text(
-                  'B',
-                  style: TextStyle(
-                    color: Color(0xFF4C5BFF),
+                  initial.toUpperCase(),
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Welcome back,',
-                  style: TextStyle(
-                    color: Color(0xFF8A94A6),
-                    fontSize: 12,
-                  ),
+                  style: AppTextStyles.label.copyWith(color: textSecondary),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.micro),
                 Text(
-                  'Alex Student',
-                  style: TextStyle(
-                    color: Color(0xFF1F2A37),
-                    fontSize: 16,
+                  userName,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (showPersonalized) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      boxShadow: AppShadows.subtle,
+                    ),
+                    child: Text(
+                      'Personalized for your financial goals',
+                      style: AppTextStyles.captionSmall.copyWith(
+                        color: textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
         ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppRadius.input),
+                boxShadow: AppShadows.subtle,
               ),
-            ],
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.notifications_none, color: Color(0xFF1F2A37)),
-            onPressed: onTapNotifications,
-          ),
+              child: IconButton(
+                icon: Icon(Icons.notifications_none, color: textPrimary),
+                onPressed: onTapNotifications,
+              ),
+            ),
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                width: AppSpacing.sm,
+                height: AppSpacing.sm,
+                decoration: BoxDecoration(
+                  color: AppColors.expense,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _DatePill extends StatelessWidget {
+  const _DatePill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final background = isDark
+        ? AppColors.darkDivider.withOpacity(0.6)
+        : AppColors.lightDivider;
+    final textColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.label.copyWith(
+            color: textColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedBubble extends StatelessWidget {
+  const _AnimatedBubble({required this.child, Key? key}) : super(key: key);
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOut,
+      builder: (context, value, _) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 8),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }
@@ -224,40 +436,86 @@ class _AdvisorBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFFDFF7EC),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.school_outlined, color: Color(0xFF22C55E)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bubbleColor = Theme.of(context).colorScheme.surface;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              color: AppColors.primaryLight.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Text(
-              message,
-              style: const TextStyle(color: Color(0xFF1F2A37), height: 1.4),
+            child: const Icon(Icons.school_outlined, color: AppColors.income),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                boxShadow: AppShadows.subtle,
+              ),
+              child: Text(
+                message,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: textColor,
+                  height: 1.4,
+                ),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+}
+
+class _UserBubble extends StatelessWidget {
+  const _UserBubble({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.lg),
+                  topRight: Radius.circular(AppRadius.sm),
+                  bottomLeft: Radius.circular(AppRadius.lg),
+                  bottomRight: Radius.circular(AppRadius.lg),
+                ),
+                boxShadow: AppShadows.subtle,
+              ),
+              child: Text(
+                message,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: Colors.white,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -275,49 +533,65 @@ class _AdvisorInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final canSend = value.text.trim().isNotEmpty && !isLoading;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
                   ),
-                ],
-              ),
-              child: TextField(
-                controller: controller,
-                minLines: 1,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Ask your advisor...'
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Ask about your finances...',
+                    ),
+                    onSubmitted: (_) => onSend(),
+                  ),
                 ),
-                onSubmitted: (_) => onSend(),
               ),
-            ),
+              const SizedBox(width: AppSpacing.sm),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: canSend ? AppColors.primary : AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                  boxShadow: AppShadows.subtle,
+                ),
+                child: IconButton(
+                  onPressed: canSend ? onSend : null,
+                  icon: isLoading
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send, color: Colors.white),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          IconButton.filled(
-            onPressed: isLoading ? null : onSend,
-            icon: isLoading
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.send),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -330,62 +604,24 @@ class _AdvisorError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.expense.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppRadius.input),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFDC2626)),
-          const SizedBox(width: 8),
+          const Icon(Icons.error_outline, color: AppColors.expense),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Color(0xFFB91C1C)),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.expense,
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.label,
-    required this.icon,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive ? const Color(0xFF16A34A) : const Color(0xFF94A3B8);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
       ),
     );
   }

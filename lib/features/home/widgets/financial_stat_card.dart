@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Financial stat card showing income/expense values
@@ -65,9 +68,9 @@ class _FinancialStatCardState extends State<FinancialStatCard>
       child: FadeTransition(
         opacity: _slideController,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             color: isDark
                 ? Colors.white.withOpacity(0.05)
                 : Colors.white.withOpacity(0.6),
@@ -75,21 +78,7 @@ class _FinancialStatCardState extends State<FinancialStatCard>
               color: widget.accentColor.withOpacity(0.1),
               width: 1,
             ),
-            boxShadow: isDark
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, -1),
-                    ),
-                  ],
+            boxShadow: AppShadows.card(isDark),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +93,7 @@ class _FinancialStatCardState extends State<FinancialStatCard>
                 ),
                 child: Icon(widget.icon, color: widget.accentColor, size: 16),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               // Label
               Text(
                 widget.label,
@@ -115,7 +104,7 @@ class _FinancialStatCardState extends State<FinancialStatCard>
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               // Amount
               Text(
                 _formatAmount(widget.amount),

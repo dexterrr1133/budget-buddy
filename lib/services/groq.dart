@@ -4,16 +4,17 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 
 import '../models/transaction.dart';
+import '../features/onboarding/models/user_profile_model.dart';
 
 class GeminiService {
-  GeminiService({http.Client? client})
-      : _client = client ?? http.Client();
+  GeminiService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
   Future<String> getCoachReply({
     required String userMessage,
     required List<TransactionModel> transactions,
+    UserProfileModel? profile,
   }) async {
     final apiKey = const String.fromEnvironment('GROQ_API_KEY');
     if (apiKey.isEmpty) {
@@ -25,12 +26,17 @@ class GeminiService {
 
     final recent = _recentTransactions(transactions);
     final contextText = _buildContext(recent);
+    final profileText = _buildProfileContext(profile);
 
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are BudgetBuddy's concise financial coach for students. Provide clear, actionable advice in under 120 words. Be supportive and specific. If data is missing, say so briefly.
 
 Context (most recent ${recent.length} transactions):
 $contextText
+
+User profile:
+$profileText
 ''';
 
     final requestBody = {
@@ -57,12 +63,14 @@ $contextText
       print('DEBUG: Response status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
-        throw Exception('Groq API error: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'Groq API error: ${response.statusCode} - ${response.body}',
+        );
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final content = data['choices']?[0]?['message']?['content'] as String?;
-      
+
       print('DEBUG: Response received successfully');
       return content?.trim() ?? 'No response generated.';
     } catch (e, stack) {
@@ -73,8 +81,7 @@ $contextText
   }
 
   List<TransactionModel> _recentTransactions(List<TransactionModel> all) {
-    final sorted = [...all]
-      ..sort((a, b) => b.date.compareTo(a.date));
+    final sorted = [...all]..sort((a, b) => b.date.compareTo(a.date));
     return sorted.take(min(20, sorted.length)).toList();
   }
 
@@ -87,5 +94,17 @@ $contextText
       );
     }
     return buffer.toString();
+  }
+
+  String _buildProfileContext(UserProfileModel? profile) {
+    if (profile == null) return 'No profile data available.';
+    return '''
+- Income range: ${profile.incomeRange ?? 'Not provided'}
+- Monthly budget: ${profile.monthlyBudget?.toStringAsFixed(0) ?? 'Not provided'}
+- Spending priorities: ${profile.spendingCategories.isEmpty ? 'Not provided' : profile.spendingCategories.join(', ')}
+- Financial goals: ${profile.financialGoals.isEmpty ? 'Not provided' : profile.financialGoals.join(', ')}
+- Risk tolerance: ${profile.riskTolerance ?? 'Not provided'}
+- Advice tone: ${profile.preferredAdviceTone ?? 'Not provided'}
+''';
   }
 }

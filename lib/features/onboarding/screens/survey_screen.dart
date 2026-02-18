@@ -97,6 +97,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     children: [
                       _buildUserNameStep(),
                       _buildCurrentFundsStep(),
+                      _buildMonthlyBudgetStep(),
                       _buildFinancialSummaryStep(),
                       _buildIncomeRangeStep(),
                       _buildExpenseCategoriesStep(),
@@ -206,6 +207,55 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 final cleanValue = value.replaceAll(',', '');
                 final amount = double.tryParse(cleanValue) ?? 0.0;
                 _controller.updateCurrentFunds(amount);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyBudgetStep() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            Text(
+              'What\'s your monthly budget?',
+              style: AppTextStyles.headlineMedium.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This helps us track your spending and provide insights',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+            const SizedBox(height: 32),
+            TextField(
+              decoration: InputDecoration(
+                hintText: '₱ 0.00',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkCard
+                    : AppColors.lightCard,
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
+              onChanged: (value) {
+                final cleanValue = value.replaceAll(',', '');
+                final amount = double.tryParse(cleanValue) ?? 0.0;
+                _controller.updateMonthlyBudget(amount);
               },
             ),
           ],
@@ -677,6 +727,12 @@ class _SurveyScreenState extends State<SurveyScreen> {
             _buildReviewItem(
               'Income Range',
               _controller.profile.incomeRange ?? 'Not set',
+            ),
+            _buildReviewItem(
+              'Monthly Budget',
+              _controller.profile.monthlyBudget != null
+                  ? '₱${_controller.profile.monthlyBudget!.toStringAsFixed(2)}'
+                  : 'Not set',
             ),
             _buildReviewItem(
               'Advice Tone',

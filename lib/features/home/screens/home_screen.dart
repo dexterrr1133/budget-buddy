@@ -7,8 +7,6 @@ import '../../../core/theme/radius.dart';
 import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../budget/widgets/category_budget_card.dart';
-import '../../budget/widgets/monthly_summary_card.dart';
 import '../../onboarding/models/user_profile_model.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
 import '../../../models/transaction.dart';
@@ -20,6 +18,7 @@ import '../widgets/alert_insight_cards.dart';
 import '../widgets/transaction_item_widget.dart';
 import '../widgets/floating_add_button.dart';
 import '../widgets/modern_bottom_nav_bar.dart';
+import '../../transaction/screens/add_transaction_modal.dart';
 
 /// Modern financial dashboard home screen
 class HomeScreen extends StatefulWidget {
@@ -71,23 +70,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onAddTransactionTap() {
-    // TODO: Navigate to add transaction screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add transaction feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddTransactionModal(),
     );
   }
 
   void _onSeeAllTap() {
-    // TODO: Navigate to full activity/transaction list
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('View all transactions feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    Navigator.pushNamed(context, '/activity');
   }
 
   void _onNavTabChanged(int index) {
@@ -345,11 +337,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final investmentsAmount = profile?.investmentsAmount ?? 0.0;
     final debtsAmount = profile?.debtsAmount ?? 0.0;
 
-    // Total balance should be: cash + savings + investments - debts
-    final totalBalance =
+    // Total balance from profile (static assets/debts)
+    final profileBalance =
         currentFunds + savingsAmount + investmentsAmount - debtsAmount;
+
     final totalIncome = txProvider.totalIncome;
     final totalExpenses = txProvider.totalExpense;
+
+    // Dynamic balance = current funds + income - expenses from transactions
+    final totalBalance = (currentFunds + totalIncome) - totalExpenses;
+
     final monthlyBudget = profile?.monthlyBudget ?? 0.0;
     final spendingRatio = monthlyBudget > 0
         ? (totalExpenses / monthlyBudget).clamp(0.0, 1.0).toDouble()
@@ -409,39 +406,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-
-          // Budget Overview
-          if (monthlyBudget > 0 && categoryBudgets.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenPadding,
-                vertical: AppSpacing.lg,
-              ),
-              child: Text(
-                'Budget Overview',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
-                ),
-              ),
-            ),
-            MonthlySummaryCard(
-              totalBudget: monthlyBudget,
-              amountSpent: totalExpenses,
-              monthYear: _currentMonthLabel(),
-            ),
-            ...categoryBudgets.map(
-              (item) => CategoryBudgetCard(
-                categoryName: item.name,
-                amountSpent: item.spent,
-                budgetLimit: item.limit,
-                icon: item.icon,
-                accentColor: item.color,
-              ),
-            ),
-          ],
 
           // Recent Activity Header
           Padding(

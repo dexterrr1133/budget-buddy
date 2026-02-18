@@ -77,10 +77,7 @@ class DatabaseHelper {
 
   Future<List<TransactionModel>> fetchTransactions() async {
     final db = await database;
-    final result = await db.query(
-      transactionsTable,
-      orderBy: 'date DESC',
-    );
+    final result = await db.query(transactionsTable, orderBy: 'date DESC');
     return result.map(TransactionModel.fromMap).toList();
   }
 
@@ -101,11 +98,12 @@ class DatabaseHelper {
 
   Future<int> deleteTransaction(int id) async {
     final db = await database;
-    return db.delete(
-      transactionsTable,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete(transactionsTable, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> clearAllTransactions() async {
+    final db = await database;
+    await db.delete(transactionsTable);
   }
 
   Future<void> close() async {

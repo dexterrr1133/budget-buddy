@@ -5,7 +5,7 @@ import '../services/database_helper.dart';
 
 class TransactionProvider extends ChangeNotifier {
   TransactionProvider({DatabaseHelper? database})
-      : _databaseHelper = database ?? DatabaseHelper.instance;
+    : _databaseHelper = database ?? DatabaseHelper.instance;
 
   final DatabaseHelper _databaseHelper;
 
@@ -74,6 +74,18 @@ class TransactionProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = 'Failed to delete transaction: $e';
+      rethrow;
+    }
+  }
+
+  Future<void> clearAllTransactions() async {
+    try {
+      await _databaseHelper.clearAllTransactions();
+      _items = [];
+      _error = null;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to clear transactions: $e';
       rethrow;
     }
   }

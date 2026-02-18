@@ -7,11 +7,13 @@ import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
+import '../../../providers/transaction_provider.dart';
 import '../controllers/budget_controller.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../widgets/category_budget_card.dart';
 import '../../home/widgets/modern_bottom_nav_bar.dart';
 import '../../home/widgets/floating_add_button.dart';
+import '../../transaction/screens/add_transaction_modal.dart';
 
 /// Modern budget tracking screen
 class BudgetScreen extends StatefulWidget {
@@ -25,27 +27,28 @@ class _BudgetScreenState extends State<BudgetScreen> {
   late BudgetController _controller;
   final ScrollController _scrollController = ScrollController();
 
-  // Category definitions with icons and colors
+  // Category definitions with icons and colors - MUST match survey category names exactly
   final Map<String, Map<String, dynamic>> categoryDefinitions = {
-    'Food & Dining': {
-      'icon': Icons.restaurant,
-      'color': const Color(0xFFFF6B6B),
-    },
-    'Transportation': {
+    'Food': {'icon': Icons.restaurant, 'color': const Color(0xFFFF6B6B)},
+    'Housing': {'icon': Icons.home, 'color': const Color(0xFF845EC2)},
+    'Transport': {
       'icon': Icons.directions_car,
       'color': const Color(0xFF4ECDC4),
     },
     'Entertainment': {'icon': Icons.movie, 'color': const Color(0xFFFFE66D)},
-    'Shopping': {'icon': Icons.shopping_bag, 'color': const Color(0xFFC44569)},
-    'Utilities': {'icon': Icons.bolt, 'color': const Color(0xFF95E1D3)},
     'Education': {'icon': Icons.school, 'color': const Color(0xFF6C5CE7)},
+    'Health': {'icon': Icons.favorite, 'color': const Color(0xFFD65DB1)},
+    'Shopping': {'icon': Icons.shopping_bag, 'color': const Color(0xFFC44569)},
+    'Subscriptions': {
+      'icon': Icons.subscriptions,
+      'color': const Color(0xFFFF6F91),
+    },
   };
 
   @override
   void initState() {
     super.initState();
     _controller = BudgetController();
-    _simulateDataLoading();
   }
 
   @override
@@ -55,24 +58,16 @@ class _BudgetScreenState extends State<BudgetScreen> {
     super.dispose();
   }
 
-  void _simulateDataLoading() {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _controller.setLoading(false);
-      }
-    });
-  }
-
   String _getCurrentMonthYear() {
     return DateFormat('MMMM yyyy').format(DateTime.now());
   }
 
   void _onAddTransactionTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add transaction feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddTransactionModal(),
     );
   }
 
@@ -105,6 +100,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final profile = context.watch<UserProfileProvider>().profile;
+    final txProvider = context.watch<TransactionProvider>();
     final userName = profile?.userName ?? 'Friend';
 
     // Get data from profile survey
@@ -112,8 +108,18 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final currentFunds = profile?.currentFunds ?? 0.00;
     final spendingCategories = profile?.spendingCategories ?? [];
 
-    // Build categories list from survey data
-    final categories = _buildCategoriesFromSurvey(spendingCategories);
+    print('DEBUG Budget Screen:');
+    print('  Profile: $profile');
+    print('  Monthly Budget: $monthlyBudget');
+    print('  Spending Categories: $spendingCategories');
+    print('  Transaction Count: ${txProvider.items.length}');
+
+    // Build categories list from survey data with actual spending
+    final categories = _buildCategoriesFromSurvey(
+      spendingCategories,
+      txProvider.items,
+      monthlyBudget,
+    );
 
     // Calculate total spent from categories
     final totalSpent = categories.fold<double>(
@@ -125,105 +131,63 @@ class _BudgetScreenState extends State<BudgetScreen> {
       backgroundColor: isDark
           ? AppColors.darkBackground
           : AppColors.lightBackground,
-      body: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          return SafeArea(
-            child: Stack(
-              children: [
-                // Main scrollable content
-                CustomScrollView(
-                  controller: _scrollController,
-                  slivers: [
-                    // Header
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.screenPadding,
-                          AppSpacing.headerTop,
-                          AppSpacing.screenPadding,
-                          AppSpacing.lg,
-                        ),
-                        child: _BudgetHeader(
-                          userName: userName,
-                          screenTitle: 'Budget Overview',
-                        ),
-                      ),
-                    ),
-                    // Content
-                    SliverToBoxAdapter(
-                      child: _controller.isLoading
-                          ? _buildLoadingState(isDark)
-                          : _buildMainContent(
-                              isDark,
-                              categories,
-                              monthlyBudget,
-                              totalSpent,
-                            ),
-                    ),
-                    // Bottom spacing for FAB and nav
-                    const SliverPadding(
-                      padding: EdgeInsets.only(bottom: AppSpacing.navClearance),
-                    ),
-                  ],
-                ),
-                // Floating Add Button
-                Positioned(
-                  bottom: AppSpacing.fabOffset,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: FloatingAddButton(onPressed: _onAddTransactionTap),
+      body: Stack(
+        children: [
+          // Main scrollable content
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenPadding,
+                    AppSpacing.headerTop,
+                    AppSpacing.screenPadding,
+                    AppSpacing.lg,
+                  ),
+                  child: _BudgetHeader(
+                    userName: userName,
+                    screenTitle: 'Budget Overview',
                   ),
                 ),
-                // Bottom Navigation
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: ModernBottomNavBar(
-                    selectedIndex: _controller.selectedNavIndex,
-                    onTabChanged: _onNavTabChanged,
-                  ),
+              ),
+              // Content
+              SliverToBoxAdapter(
+                child: _buildMainContent(
+                  isDark,
+                  categories,
+                  monthlyBudget,
+                  totalSpent,
                 ),
-              ],
+              ),
+              // Bottom spacing for FAB and nav
+              const SliverPadding(
+                padding: EdgeInsets.only(bottom: AppSpacing.navClearance),
+              ),
+            ],
+          ),
+          // Floating Add Button
+          Positioned(
+            bottom: AppSpacing.fabOffset,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: FloatingAddButton(onPressed: _onAddTransactionTap),
             ),
-          );
-        },
+          ),
+          // Bottom Navigation
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: ModernBottomNavBar(
+              selectedIndex: _controller.selectedNavIndex,
+              onTabChanged: _onNavTabChanged,
+            ),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildLoadingState(bool isDark) {
-    return Column(
-      children: [
-        // Skeleton for summary card
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          height: 180,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: isDark
-                ? AppColors.darkCard.withOpacity(0.5)
-                : Colors.grey.withOpacity(0.1),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Skeleton loaders for category cards
-        ...List.generate(
-          4,
-          (index) => Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            height: 100,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isDark
-                  ? AppColors.darkCard.withOpacity(0.5)
-                  : Colors.grey.withOpacity(0.1),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -282,59 +246,36 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   List<Map<String, dynamic>> _buildCategoriesFromSurvey(
     List<String> spendingCategories,
+    List<dynamic> transactions,
+    double monthlyBudget,
   ) {
     final List<Map<String, dynamic>> result = [];
 
     // Default category allocation if no spending categories from survey
     if (spendingCategories.isEmpty) {
-      return [
-        {
-          'name': 'Food & Dining',
-          'spent': 8500.00,
-          'limit': 10000.00,
-          'icon':
-              categoryDefinitions['Food & Dining']?['icon'] ?? Icons.restaurant,
-          'color':
-              categoryDefinitions['Food & Dining']?['color'] ??
-              const Color(0xFFFF6B6B),
-        },
-        {
-          'name': 'Transportation',
-          'spent': 3200.00,
-          'limit': 5000.00,
-          'icon':
-              categoryDefinitions['Transportation']?['icon'] ??
-              Icons.directions_car,
-          'color':
-              categoryDefinitions['Transportation']?['color'] ??
-              const Color(0xFF4ECDC4),
-        },
-        {
-          'name': 'Entertainment',
-          'spent': 4100.00,
-          'limit': 5000.00,
-          'icon': categoryDefinitions['Entertainment']?['icon'] ?? Icons.movie,
-          'color':
-              categoryDefinitions['Entertainment']?['color'] ??
-              const Color(0xFFFFE66D),
-        },
-      ];
+      return [];
     }
 
-    // Build categories from survey data
-    for (int i = 0; i < spendingCategories.length; i++) {
-      final categoryName = spendingCategories[i];
+    // Calculate budget allocation per category
+    final budgetPerCategory = monthlyBudget / spendingCategories.length;
+
+    // Build categories from survey data with actual spending
+    for (final categoryName in spendingCategories) {
       final definition = categoryDefinitions[categoryName];
 
       if (definition != null) {
-        // Allocate budget proportionally (simplified)
-        final limitAmount = 10000.00 / spendingCategories.length;
-        final spentAmount = limitAmount * 0.65; // Assume 65% spent
+        // Calculate actual spending for this category from transactions
+        double spentAmount = 0.0;
+        for (final tx in transactions) {
+          if (tx.category == categoryName && tx.type == 'expense') {
+            spentAmount += tx.amount;
+          }
+        }
 
         result.add({
           'name': categoryName,
           'spent': spentAmount,
-          'limit': limitAmount,
+          'limit': budgetPerCategory,
           'icon': definition['icon'] as IconData,
           'color': definition['color'] as Color,
         });

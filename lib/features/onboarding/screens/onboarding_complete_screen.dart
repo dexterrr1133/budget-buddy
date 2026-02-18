@@ -244,7 +244,12 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
             '📊 Risk Level',
             widget.profile.riskTolerance ?? 'Not set',
           ),
-          _summaryItem('💪 Savings', widget.profile.savingsHabit ?? 'Not set'),
+          _summaryItem(
+            '💪 Savings',
+            widget.profile.savingsAmount != null
+                ? '₱${widget.profile.savingsAmount!.toStringAsFixed(2)}'
+                : 'Not set',
+          ),
           _summaryItem(
             '🎯 Goals',
             widget.profile.financialGoals.isEmpty

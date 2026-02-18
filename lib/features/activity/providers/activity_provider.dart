@@ -12,8 +12,12 @@ class ActivityProvider extends ChangeNotifier {
 
   List<ActivityTransaction> _transactions = [];
   String _query = '';
+  String _typeFilter = 'all'; // 'all', 'income', 'expense'
+  int _daysFilter = 30; // Show last N days (0 = all)
 
   String get query => _query;
+  String get typeFilter => _typeFilter;
+  int get daysFilter => _daysFilter;
 
   void updateTransactions(List<TransactionModel> transactions) {
     _transactions = transactions.map(_mapTransaction).toList()
@@ -23,6 +27,16 @@ class ActivityProvider extends ChangeNotifier {
 
   void setQuery(String value) {
     _query = value.trim();
+    notifyListeners();
+  }
+
+  void setTypeFilter(String type) {
+    _typeFilter = type;
+    notifyListeners();
+  }
+
+  void setDaysFilter(int days) {
+    _daysFilter = days;
     notifyListeners();
   }
 
@@ -45,9 +59,25 @@ class ActivityProvider extends ChangeNotifier {
   }
 
   List<ActivityTransaction> _filteredTransactions() {
-    if (_query.isEmpty) return _transactions;
+    List<ActivityTransaction> result = _transactions;
+
+    // Apply type filter
+    if (_typeFilter == 'income') {
+      result = result.where((tx) => tx.isIncome).toList();
+    } else if (_typeFilter == 'expense') {
+      result = result.where((tx) => !tx.isIncome).toList();
+    }
+
+    // Apply date filter
+    if (_daysFilter > 0) {
+      final cutoffDate = DateTime.now().subtract(Duration(days: _daysFilter));
+      result = result.where((tx) => tx.date.isAfter(cutoffDate)).toList();
+    }
+
+    // Apply query filter
+    if (_query.isEmpty) return result;
     final lower = _query.toLowerCase();
-    return _transactions.where((tx) {
+    return result.where((tx) {
       return tx.title.toLowerCase().contains(lower) ||
           tx.category.toLowerCase().contains(lower);
     }).toList();

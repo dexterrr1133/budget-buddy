@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Financial stat card showing income/expense values
 class FinancialStatCard extends StatefulWidget {
@@ -44,17 +46,9 @@ class _FinancialStatCardState extends State<FinancialStatCard>
     super.dispose();
   }
 
-  String _formatAmount(double amount) {
-    if (amount >= 1000000) {
-      return '₱${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '₱${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return '₱${amount.toStringAsFixed(0)}';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SlideTransition(
@@ -72,10 +66,10 @@ class _FinancialStatCardState extends State<FinancialStatCard>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.card),
             color: isDark
-                ? Colors.white.withOpacity(0.05)
-                : Colors.white.withOpacity(0.6),
+                ? Colors.white.withAlpha(13)
+                : Colors.white.withAlpha(153),
             border: Border.all(
-              color: widget.accentColor.withOpacity(0.1),
+              color: widget.accentColor.withAlpha(26),
               width: 1,
             ),
             boxShadow: AppShadows.card(isDark),
@@ -89,7 +83,7 @@ class _FinancialStatCardState extends State<FinancialStatCard>
                 height: 32,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: widget.accentColor.withOpacity(0.15),
+                  color: widget.accentColor.withAlpha(38),
                 ),
                 child: Icon(widget.icon, color: widget.accentColor, size: 16),
               ),
@@ -107,7 +101,10 @@ class _FinancialStatCardState extends State<FinancialStatCard>
               const SizedBox(height: AppSpacing.xs),
               // Amount
               Text(
-                _formatAmount(widget.amount),
+                settings.formatCompactAmount(
+                  widget.amount,
+                  decimalDigits: settings.decimalDigits,
+                ),
                 style: AppTextStyles.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   color: widget.accentColor,

@@ -11,8 +11,9 @@ import '../../onboarding/models/user_profile_model.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
 import '../../../models/transaction.dart';
 import '../../../providers/transaction_provider.dart';
+import '../../../providers/settings_provider.dart';
+import '../../../providers/chat_coach_provider.dart';
 import '../controllers/home_controller.dart';
-import '../widgets/home_header_widget.dart';
 import '../widgets/balance_summary_card.dart';
 import '../widgets/alert_insight_cards.dart';
 import '../widgets/transaction_item_widget.dart';
@@ -31,8 +32,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late HomeController _controller;
   final ScrollController _scrollController = ScrollController();
-
-  final int notificationCount = 2;
 
   @override
   void initState() {
@@ -57,16 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _controller.setLoading(false);
       }
     });
-  }
-
-  void _onNotificationTap() {
-    // TODO: Navigate to notifications screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$notificationCount notifications'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   void _onAddTransactionTap() {
@@ -112,14 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final profile = context.watch<UserProfileProvider>().profile;
     final txProvider = context.watch<TransactionProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final coach = context.watch<ChatCoachProvider>();
     final userName = profile?.userName ?? 'Friend';
-    final spendingRatio =
-        profile?.monthlyBudget != null && profile!.monthlyBudget! > 0
-        ? (txProvider.totalExpense / profile.monthlyBudget!)
-              .clamp(0.0, 1.0)
-              .toDouble()
-        : 0.0;
-    final greetingMessage = _buildPersonalizedGreeting(profile, spendingRatio);
 
     return Scaffold(
       backgroundColor: isDark
@@ -156,7 +140,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     SliverToBoxAdapter(
                       child: _controller.isLoading
                           ? _buildLoadingState(isDark)
-                          : _buildMainContent(isDark, profile, txProvider),
+                          : _buildMainContent(
+                              isDark,
+                              profile,
+                              txProvider,
+                              settings,
+                              coach,
+                            ),
                     ),
                     // Bottom spacing for FAB and nav
                     const SliverPadding(
@@ -300,8 +290,8 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.xxl),
             color: isDark
-                ? AppColors.darkCard.withOpacity(0.5)
-                : Colors.grey.withOpacity(0.1),
+                ? AppColors.darkCard.withAlpha(128)
+                : Colors.grey.withAlpha(26),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -317,8 +307,8 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.card),
               color: isDark
-                  ? AppColors.darkCard.withOpacity(0.5)
-                  : Colors.grey.withOpacity(0.1),
+                  ? AppColors.darkCard.withAlpha(128)
+                  : Colors.grey.withAlpha(26),
             ),
           ),
         ),
@@ -330,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isDark,
     UserProfileModel? profile,
     TransactionProvider txProvider,
+    SettingsProvider settings,
+    ChatCoachProvider coach,
   ) {
     // Calculate balance from profile data
     final currentFunds = profile?.currentFunds ?? 0.0;
@@ -338,9 +330,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final debtsAmount = profile?.debtsAmount ?? 0.0;
 
     // Total balance from profile (static assets/debts)
-    final profileBalance =
-        currentFunds + savingsAmount + investmentsAmount - debtsAmount;
-
     final totalIncome = txProvider.totalIncome;
     final totalExpenses = txProvider.totalExpense;
 
@@ -351,14 +340,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final spendingRatio = monthlyBudget > 0
         ? (totalExpenses / monthlyBudget).clamp(0.0, 1.0).toDouble()
         : 0.0;
-    final alertMessage = _buildAlertMessage(
+    final fallbackAlert = _buildAlertMessage(
       profile,
       spendingRatio,
       monthlyBudget,
     );
-    final insightMessage = _buildInsightMessage(profile, spendingRatio);
+    final fallbackInsight = _buildInsightMessage(profile, spendingRatio);
+    final alertMessage = (coach.latestAlert?.trim().isNotEmpty ?? false)
+      ? coach.latestAlert!.trim()
+      : fallbackAlert;
+    final insightMessage = (coach.latestInsight?.trim().isNotEmpty ?? false)
+      ? coach.latestInsight!.trim()
+      : fallbackInsight;
     final recentItems = _recentTransactions(txProvider.items);
-    final categoryBudgets = _buildCategoryBudgets(profile, txProvider.items);
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
@@ -383,6 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
               savingsAmount,
               investmentsAmount,
               debtsAmount,
+              settings,
             ),
 
           // Alert and Insight Cards
@@ -464,10 +459,11 @@ class _HomeScreenState extends State<HomeScreen> {
     double savingsAmount,
     double investmentsAmount,
     double debtsAmount,
+    SettingsProvider settings,
   ) {
     final total =
         currentFunds + savingsAmount + investmentsAmount + debtsAmount;
-    if (total <= 0) return const SizedBox.shrink();
+    final totalForPercent = total <= 0 ? 0.0 : total;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,8 +497,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 height: 200,
                 color: isDark
-                    ? AppColors.darkCard.withOpacity(0.5)
-                    : Colors.grey.withOpacity(0.05),
+                  ? AppColors.darkCard.withAlpha(128)
+                  : Colors.grey.withAlpha(13),
                 child: CustomPaint(
                   painter: _PieChartPainter(
                     values: [
@@ -529,7 +525,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 savingsAmount,
                 investmentsAmount,
                 debtsAmount,
-                total,
+                totalForPercent,
+                settings,
               ),
             ],
           ),
@@ -545,8 +542,8 @@ class _HomeScreenState extends State<HomeScreen> {
     double investmentsAmount,
     double debtsAmount,
     double total,
+    SettingsProvider settings,
   ) {
-    final formatter = NumberFormat('#,##0.00', 'en_US');
     final textSecondary = isDark
         ? AppColors.darkTextSecondary
         : AppColors.lightTextSecondary;
@@ -581,7 +578,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Text(
-                    '₱${formatter.format(item.$2)}',
+                    settings.formatAmount(
+                      item.$2,
+                      decimalDigits: settings.decimalDigits,
+                    ),
                     style: AppTextStyles.label.copyWith(
                       fontWeight: FontWeight.bold,
                       color: item.$3,
@@ -589,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    '${((item.$2 / total) * 100).round()}%',
+                    '${total <= 0 ? 0 : ((item.$2 / total) * 100).round()}%',
                     style: AppTextStyles.captionSmall.copyWith(
                       color: textSecondary,
                     ),
@@ -600,23 +600,6 @@ class _HomeScreenState extends State<HomeScreen> {
           )
           .toList(),
     );
-  }
-
-  String _currentMonthLabel() {
-    return DateFormat('MMMM yyyy').format(DateTime.now());
-  }
-
-  String? _buildPersonalizedGreeting(
-    UserProfileModel? profile,
-    double spendingRatio,
-  ) {
-    if (profile == null || profile.financialGoals.isEmpty) return null;
-    if (spendingRatio >= 0.9) {
-      return 'You are close to your budget limit.';
-    }
-
-    final goal = profile.financialGoals.first;
-    return 'You are making progress toward your $goal goal.';
   }
 
   String _buildAlertMessage(
@@ -685,39 +668,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-  List<_CategoryBudgetData> _buildCategoryBudgets(
-    UserProfileModel? profile,
-    List<TransactionModel> transactions,
-  ) {
-    if (profile == null || profile.spendingCategories.isEmpty) {
-      return [];
-    }
-
-    final expenseMap = <String, double>{};
-    for (final tx in transactions) {
-      if (tx.type != 'expense') continue;
-      expenseMap.update(
-        tx.category,
-        (value) => value + tx.amount,
-        ifAbsent: () => tx.amount,
-      );
-    }
-
-    final limit =
-        (profile.monthlyBudget ?? 0) /
-        profile.spendingCategories.length.clamp(1, 99);
-
-    return profile.spendingCategories.map((category) {
-      return _CategoryBudgetData(
-        name: category,
-        spent: expenseMap[category] ?? 0,
-        limit: limit,
-        icon: _categoryIcon(category, false),
-        color: _categoryColor(category),
-      );
-    }).toList();
-  }
-
   String _formatDateLabel(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -741,17 +691,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (label.contains('entertain')) return Icons.movie;
     return Icons.list_alt;
   }
-
-  Color _categoryColor(String category) {
-    final label = category.toLowerCase();
-    if (label.contains('food')) return AppColors.warning;
-    if (label.contains('transport')) return AppColors.savings;
-    if (label.contains('rent') || label.contains('housing')) {
-      return AppColors.expense;
-    }
-    if (label.contains('health')) return AppColors.primaryLight;
-    return AppColors.income;
-  }
 }
 
 class _RecentTransactionItem {
@@ -770,22 +709,6 @@ class _RecentTransactionItem {
   final double amount;
   final bool isIncome;
   final IconData icon;
-}
-
-class _CategoryBudgetData {
-  const _CategoryBudgetData({
-    required this.name,
-    required this.spent,
-    required this.limit,
-    required this.icon,
-    required this.color,
-  });
-
-  final String name;
-  final double spent;
-  final double limit;
-  final IconData icon;
-  final Color color;
 }
 
 class _PieChartPainter extends CustomPainter {

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Individual transaction item for recent activity list
 class TransactionItemWidget extends StatefulWidget {
@@ -48,13 +50,17 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
     super.dispose();
   }
 
-  String _formatAmount(double amount) {
-    return '₱${amount.abs().toStringAsFixed(2)}';
+  String _formatAmount(SettingsProvider settings, double amount) {
+    return settings.formatAmount(
+      amount.abs(),
+      decimalDigits: settings.decimalDigits,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.watch<SettingsProvider>();
     final amountColor = widget.isIncome ? AppColors.income : AppColors.expense;
 
     return SlideTransition(
@@ -78,7 +84,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             border: Border.all(
               color: isDark
-                  ? AppColors.darkDivider.withOpacity(0.5)
+                  ? AppColors.darkDivider.withAlpha(128)
                   : AppColors.lightDivider,
               width: 1,
             ),
@@ -92,7 +98,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: amountColor.withOpacity(0.15),
+                  color: amountColor.withAlpha(38),
                 ),
                 child: Icon(widget.icon, color: amountColor, size: 20),
               ),
@@ -160,7 +166,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
               const SizedBox(width: AppSpacing.sm),
               // Amount
               Text(
-                '${widget.isIncome ? '+' : '-'}${_formatAmount(widget.amount)}',
+                '${widget.isIncome ? '+' : '-'}${_formatAmount(settings, widget.amount)}',
                 style: AppTextStyles.transactionAmount.copyWith(
                   color: amountColor,
                 ),

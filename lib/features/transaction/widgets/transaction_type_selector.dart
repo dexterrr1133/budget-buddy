@@ -40,7 +40,7 @@ class TransactionTypeSelector extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: isIncome
-                      ? AppColors.income.withOpacity(0.2)
+                      ? AppColors.income.withAlpha(51)
                       : Colors.transparent,
                 ),
                 child: Row(
@@ -86,7 +86,7 @@ class TransactionTypeSelector extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: !isIncome
-                      ? AppColors.expense.withOpacity(0.2)
+                      ? AppColors.expense.withAlpha(51)
                       : Colors.transparent,
                 ),
                 child: Row(

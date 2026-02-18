@@ -79,7 +79,6 @@ class _ChatCoachScreenState extends State<ChatCoachScreen> {
           builder: (context, provider, _) {
             final profileProvider = context.watch<UserProfileProvider>();
             final profile = profileProvider.profile;
-            final showPersonalized = profile?.isComplete ?? false;
             final userName = profile?.userName ?? 'Friend';
             return Column(
               children: [
@@ -250,124 +249,6 @@ class _ChatCoachScreenState extends State<ChatCoachScreen> {
   }
 }
 
-class _AdvisorHeader extends StatelessWidget {
-  const _AdvisorHeader({
-    required this.onTapNotifications,
-    required this.showPersonalized,
-    required this.userName,
-  });
-
-  final VoidCallback onTapNotifications;
-  final bool showPersonalized;
-  final String userName;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.darkTextPrimary
-        : AppColors.lightTextPrimary;
-    final textSecondary = isDark
-        ? AppColors.darkTextSecondary
-        : AppColors.lightTextSecondary;
-    final initial = userName.isNotEmpty ? userName[0] : 'B';
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            InkWell(
-              onTap: () => Navigator.of(context).pushNamed('/settings'),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundColor: AppColors.primaryLight.withOpacity(0.6),
-                child: Text(
-                  initial.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.primaryDark,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome back,',
-                  style: AppTextStyles.label.copyWith(color: textSecondary),
-                ),
-                const SizedBox(height: AppSpacing.micro),
-                Text(
-                  userName,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (showPersonalized) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      boxShadow: AppShadows.subtle,
-                    ),
-                    child: Text(
-                      'Personalized for your financial goals',
-                      style: AppTextStyles.captionSmall.copyWith(
-                        color: textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.input),
-                boxShadow: AppShadows.subtle,
-              ),
-              child: IconButton(
-                icon: Icon(Icons.notifications_none, color: textPrimary),
-                onPressed: onTapNotifications,
-              ),
-            ),
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                width: AppSpacing.sm,
-                height: AppSpacing.sm,
-                decoration: BoxDecoration(
-                  color: AppColors.expense,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 class _DatePill extends StatelessWidget {
   const _DatePill({required this.label});
 
@@ -377,7 +258,7 @@ class _DatePill extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final background = isDark
-        ? AppColors.darkDivider.withOpacity(0.6)
+        ? AppColors.darkDivider.withAlpha(153)
         : AppColors.lightDivider;
     final textColor = isDark
         ? AppColors.darkTextSecondary
@@ -406,7 +287,7 @@ class _DatePill extends StatelessWidget {
 }
 
 class _AnimatedBubble extends StatelessWidget {
-  const _AnimatedBubble({required this.child, Key? key}) : super(key: key);
+  const _AnimatedBubble({required this.child});
 
   final Widget child;
 
@@ -451,7 +332,7 @@ class _AdvisorBubble extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.2),
+              color: AppColors.primaryLight.withAlpha(51),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(Icons.school_outlined, color: AppColors.income),
@@ -606,7 +487,7 @@ class _AdvisorError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.expense.withOpacity(0.1),
+        color: AppColors.expense.withAlpha(26),
         borderRadius: BorderRadius.circular(AppRadius.input),
       ),
       child: Row(

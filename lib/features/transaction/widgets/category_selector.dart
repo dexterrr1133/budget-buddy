@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../onboarding/providers/user_profile_provider.dart';
 
 /// Category selector for transactions
 class CategorySelector extends StatefulWidget {
@@ -86,7 +84,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: isSelected
-                      ? AppColors.primary.withOpacity(0.2)
+                      ? AppColors.primary.withAlpha(51)
                       : (isDark ? AppColors.darkCard : AppColors.lightCard),
                   border: Border.all(
                     color: isSelected

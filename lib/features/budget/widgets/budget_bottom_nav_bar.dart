@@ -41,8 +41,8 @@ class _BudgetBottomNavBarState extends State<BudgetBottomNavBar> {
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.black).withOpacity(
-              isDark ? 0.2 : 0.08,
+            color: (isDark ? Colors.black : Colors.black).withAlpha(
+              isDark ? 51 : 20,
             ),
             blurRadius: 12,
             offset: const Offset(0, -4),
@@ -89,7 +89,7 @@ class _BudgetBottomNavBarState extends State<BudgetBottomNavBar> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? AppColors.primary.withOpacity(0.15)
+            ? AppColors.primary.withAlpha(38)
               : Colors.transparent,
         ),
         child: Column(

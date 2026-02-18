@@ -35,7 +35,10 @@ class SettingsScreen extends StatelessWidget {
                     title: const Text('Monthly Budget'),
                     subtitle: Text(
                       profile.monthlyBudget != null
-                          ? '₱${profile.monthlyBudget!.toStringAsFixed(2)}'
+                          ? settings.formatAmount(
+                              profile.monthlyBudget!,
+                              decimalDigits: settings.decimalDigits,
+                            )
                           : 'Not set',
                     ),
                   ),
@@ -44,7 +47,10 @@ class SettingsScreen extends StatelessWidget {
                     title: const Text('Current Funds'),
                     subtitle: Text(
                       profile.currentFunds != null
-                          ? '₱${profile.currentFunds!.toStringAsFixed(2)}'
+                          ? settings.formatAmount(
+                              profile.currentFunds!,
+                              decimalDigits: settings.decimalDigits,
+                            )
                           : 'Not set',
                     ),
                   ),
@@ -53,7 +59,10 @@ class SettingsScreen extends StatelessWidget {
                     ListTile(
                       title: const Text('Savings'),
                       subtitle: Text(
-                        '₱${profile.savingsAmount!.toStringAsFixed(2)}',
+                        settings.formatAmount(
+                          profile.savingsAmount!,
+                          decimalDigits: settings.decimalDigits,
+                        ),
                       ),
                     ),
                   ],
@@ -63,7 +72,10 @@ class SettingsScreen extends StatelessWidget {
                     ListTile(
                       title: const Text('Investments'),
                       subtitle: Text(
-                        '₱${profile.investmentsAmount!.toStringAsFixed(2)}',
+                        settings.formatAmount(
+                          profile.investmentsAmount!,
+                          decimalDigits: settings.decimalDigits,
+                        ),
                       ),
                     ),
                   ],
@@ -73,7 +85,10 @@ class SettingsScreen extends StatelessWidget {
                     ListTile(
                       title: const Text('Debts'),
                       subtitle: Text(
-                        '₱${profile.debtsAmount!.toStringAsFixed(2)}',
+                        settings.formatAmount(
+                          profile.debtsAmount!,
+                          decimalDigits: settings.decimalDigits,
+                        ),
                       ),
                     ),
                   ],
@@ -212,18 +227,18 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () async {
+                          final userProfileProvider =
+                              context.read<UserProfileProvider>();
+                          final transactionProvider =
+                              context.read<TransactionProvider>();
+                          final navigator = Navigator.of(context);
                           Navigator.pop(context);
-                          await context
-                              .read<UserProfileProvider>()
-                              .clearProfile();
-                          await context
-                              .read<TransactionProvider>()
-                              .clearAllTransactions();
-                          if (context.mounted) {
-                            Navigator.of(
-                              context,
-                            ).pushNamedAndRemoveUntil('/', (route) => false);
-                          }
+                          await userProfileProvider.clearProfile();
+                          await transactionProvider.clearAllTransactions();
+                          navigator.pushNamedAndRemoveUntil(
+                            '/',
+                            (route) => false,
+                          );
                         },
                         child: const Text(
                           'Clear',
@@ -248,7 +263,6 @@ class SettingsScreen extends StatelessWidget {
       case ThemeMode.light:
         return 'Light';
       case ThemeMode.system:
-      default:
         return 'System';
     }
   }
@@ -288,7 +302,7 @@ class _SettingsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Monthly budget summary card showing safe to spend and total budget
 class MonthlySummaryCard extends StatefulWidget {
@@ -42,15 +44,6 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
     super.dispose();
   }
 
-  String _formatAmount(double amount) {
-    if (amount >= 1000000) {
-      return '₱${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '₱${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return '₱${amount.toStringAsFixed(2)}';
-  }
-
   double get _safeToSpend =>
       (widget.totalBudget - widget.amountSpent).clamp(0, double.infinity);
 
@@ -67,6 +60,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SlideTransition(
@@ -86,7 +80,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             border: Border.all(
               color: isDark
-                  ? AppColors.darkDivider.withOpacity(0.3)
+                  ? AppColors.darkDivider.withAlpha(77)
                   : AppColors.lightDivider,
               width: 1,
             ),
@@ -115,7 +109,10 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            _formatAmount(_safeToSpend),
+                            settings.formatCompactAmount(
+                              _safeToSpend,
+                              decimalDigits: settings.decimalDigits,
+                            ),
                             style: AppTextStyles.headlineMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: _safeToSpend > 0
@@ -141,7 +138,10 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            _formatAmount(widget.totalBudget),
+                            settings.formatCompactAmount(
+                              widget.totalBudget,
+                              decimalDigits: settings.decimalDigits,
+                            ),
                             style: AppTextStyles.headlineMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: isDark
@@ -211,8 +211,8 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard>
                                     color: _getProgressColor(),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: _getProgressColor().withOpacity(
-                                          0.4,
+                                        color: _getProgressColor().withAlpha(
+                                          102,
                                         ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),

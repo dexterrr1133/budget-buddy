@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import 'financial_stat_card.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Total balance summary card with income and expense stats
 class BalanceSummaryCard extends StatefulWidget {
@@ -43,17 +45,9 @@ class _BalanceSummaryCardState extends State<BalanceSummaryCard>
     super.dispose();
   }
 
-  String _formatBalance(double amount) {
-    if (amount >= 1000000) {
-      return '₱${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '₱${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return '₱${amount.toStringAsFixed(2)}';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     final isNegative = widget.totalBalance < 0;
 
     return SlideTransition(
@@ -86,17 +80,20 @@ class _BalanceSummaryCardState extends State<BalanceSummaryCard>
                 Text(
                   'Total Balance',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withAlpha(217),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 // Balance amount
                 Text(
-                  _formatBalance(widget.totalBalance),
+                  settings.formatCompactAmount(
+                    widget.totalBalance,
+                    decimalDigits: settings.decimalDigits,
+                  ),
                   style: AppTextStyles.balanceXL.copyWith(
                     color: isNegative
-                        ? AppColors.expense.withOpacity(0.9)
+                        ? AppColors.expense.withAlpha(230)
                         : Colors.white,
                     height: 1.2,
                   ),

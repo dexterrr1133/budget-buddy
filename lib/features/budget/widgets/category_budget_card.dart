@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Individual category budget card with progress tracking
 class CategoryBudgetCard extends StatefulWidget {
@@ -13,6 +15,7 @@ class CategoryBudgetCard extends StatefulWidget {
   final IconData icon;
   final Color accentColor;
   final int animationDelay;
+  final VoidCallback? onEditBudget;
 
   const CategoryBudgetCard({
     required this.categoryName,
@@ -21,6 +24,7 @@ class CategoryBudgetCard extends StatefulWidget {
     required this.icon,
     required this.accentColor,
     this.animationDelay = 0,
+    this.onEditBudget,
     super.key,
   });
 
@@ -51,15 +55,6 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
     super.dispose();
   }
 
-  String _formatAmount(double amount) {
-    if (amount >= 1000000) {
-      return '₱${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '₱${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return '₱${amount.toStringAsFixed(0)}';
-  }
-
   double get _percentageUsed {
     if (widget.budgetLimit == 0) return 0;
     return (widget.amountSpent / widget.budgetLimit).clamp(0, 1);
@@ -75,6 +70,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SlideTransition(
@@ -98,9 +94,9 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             border: Border.all(
               color: _isOverBudget
-                  ? AppColors.expense.withOpacity(0.3)
+                  ? AppColors.expense.withAlpha(77)
                   : (isDark
-                        ? AppColors.darkDivider.withOpacity(0.5)
+                        ? AppColors.darkDivider.withAlpha(128)
                         : AppColors.lightDivider),
               width: _isOverBudget ? 1.5 : 1,
             ),
@@ -117,7 +113,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: widget.accentColor.withOpacity(0.15),
+                      color: widget.accentColor.withAlpha(38),
                     ),
                     child: Icon(
                       widget.icon,
@@ -142,7 +138,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                         ),
                         const SizedBox(height: AppSpacing.micro),
                         Text(
-                          'Spent: ${_formatAmount(widget.amountSpent)}',
+                          'Spent: ${settings.formatCompactAmount(widget.amountSpent, decimalDigits: settings.decimalDigits)}',
                           style: AppTextStyles.label.copyWith(
                             color: isDark
                                 ? AppColors.darkTextSecondary
@@ -156,16 +152,40 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        _formatAmount(widget.budgetLimit),
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: _isOverBudget
-                              ? AppColors.expense
-                              : (isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary),
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            settings.formatCompactAmount(
+                              widget.budgetLimit,
+                              decimalDigits: settings.decimalDigits,
+                            ),
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: _isOverBudget
+                                  ? AppColors.expense
+                                  : (isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.lightTextPrimary),
+                            ),
+                          ),
+                          if (widget.onEditBudget != null) ...[
+                            const SizedBox(width: AppSpacing.xs),
+                            InkWell(
+                              onTap: widget.onEditBudget,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xs,
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                size: 14,
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       if (_isOverBudget)
                         Row(
@@ -222,8 +242,8 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                                     color: _getProgressColor(),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: _getProgressColor().withOpacity(
-                                          0.3,
+                                        color: _getProgressColor().withAlpha(
+                                          77,
                                         ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 1),

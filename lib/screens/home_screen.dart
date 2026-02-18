@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field, unused_element, unused_element_parameter, use_build_context_synchronously, unnecessary_to_list_in_spreads
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -335,7 +337,7 @@ class _BalanceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF16A34A).withOpacity(0.25),
+            color: const Color(0xFF16A34A).withAlpha(64),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -480,7 +482,7 @@ class _HomeTransactionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -717,7 +719,7 @@ class _SmallStatCard extends StatelessWidget {
           Text(
             subtitle,
             style: TextStyle(
-              color: (textColor ?? Colors.grey[600])?.withOpacity(0.9),
+              color: (textColor ?? Colors.grey[600])?.withAlpha(230),
               fontSize: 10,
             ),
           ),
@@ -748,7 +750,7 @@ class _ReminderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha(26),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -934,7 +936,7 @@ class _TransactionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withAlpha(38),
           child: Icon(isIncome ? Icons.trending_up : Icons.trending_down, color: color),
         ),
         title: Text(title),

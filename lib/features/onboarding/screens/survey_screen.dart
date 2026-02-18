@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../core/theme/radius.dart';
 import '../controllers/survey_controller.dart';
 import '../providers/user_profile_provider.dart';
 import '../widgets/animated_progress_indicator.dart';
 import '../widgets/selection_card.dart';
 import '../widgets/selectable_chip.dart';
 import 'onboarding_complete_screen.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Custom formatter to add commas to numbers
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {
@@ -167,6 +167,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Widget _buildCurrentFundsStep() {
+    final settings = context.watch<SettingsProvider>();
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -192,7 +193,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 32),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱ 0.00',
+                hintText: '${settings.currencySymbol} 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -216,6 +217,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Widget _buildMonthlyBudgetStep() {
+    final settings = context.watch<SettingsProvider>();
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -241,7 +243,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 32),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱ 0.00',
+                hintText: '${settings.currencySymbol} 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -265,6 +267,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Widget _buildFinancialSummaryStep() {
+    final settings = context.watch<SettingsProvider>();
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -290,7 +293,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 32),
             // Savings amount
             Text(
-              'Savings Amount (₱)',
+              'Savings Amount (${settings.currencySymbol})',
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -298,7 +301,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱ 0.00',
+                hintText: '${settings.currencySymbol} 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -318,7 +321,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 20),
             // Investments amount
             Text(
-              'Investments Amount (₱)',
+              'Investments Amount (${settings.currencySymbol})',
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -326,7 +329,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱ 0.00',
+                hintText: '${settings.currencySymbol} 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -365,14 +368,14 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 ),
                 value: _controller.profile.hasDebt,
                 onChanged: _controller.updateHasDebt,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ),
             if (_controller.profile.hasDebt) ...[
               const SizedBox(height: 20),
               // Debts amount
               Text(
-                'Debts Amount (₱)',
+                'Debts Amount (${settings.currencySymbol})',
                 style: AppTextStyles.bodyLarge.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -380,7 +383,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
               const SizedBox(height: 8),
               TextField(
                 decoration: InputDecoration(
-                  hintText: '₱ 0.00',
+                  hintText: '${settings.currencySymbol} 0.00',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -405,6 +408,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Widget _buildIncomeRangeStep() {
+    final settings = context.watch<SettingsProvider>();
+    final symbol = settings.currencySymbol;
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -428,10 +433,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
             ),
             const SizedBox(height: 32),
             ...[
-              ('₱0 - ₱10,000', '💰'),
-              ('₱10,000 - ₱25,000', '💵'),
-              ('₱25,000 - ₱50,000', '💸'),
-              ('₱50,000+', '🏦'),
+              ('${symbol}0 - ${symbol}10,000', '💰'),
+              ('${symbol}10,000 - ${symbol}25,000', '💵'),
+              ('${symbol}25,000 - ${symbol}50,000', '💸'),
+              ('${symbol}50,000+', '🏦'),
             ].map((item) {
               final (range, emoji) = item;
               return Padding(
@@ -444,7 +449,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   onTap: () => _controller.updateIncomeRange(range),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -572,7 +577,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   learnMore: 'We will match recommendations to this style.',
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -694,7 +699,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   learnMore: learnMore,
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -702,6 +707,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Widget _buildReviewStep() {
+    final settings = context.watch<SettingsProvider>();
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -731,7 +737,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
             _buildReviewItem(
               'Monthly Budget',
               _controller.profile.monthlyBudget != null
-                  ? '₱${_controller.profile.monthlyBudget!.toStringAsFixed(2)}'
+                  ? settings.formatAmount(
+                      _controller.profile.monthlyBudget!,
+                      decimalDigits: settings.decimalDigits,
+                    )
                   : 'Not set',
             ),
             _buildReviewItem(
@@ -855,7 +864,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     await context.read<UserProfileProvider>().setProfile(
                       _controller.profile,
                     );
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => OnboardingCompleteScreen(

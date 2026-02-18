@@ -250,16 +250,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
+                      final userProfileProvider =
+                        context.read<UserProfileProvider>();
+                      final transactionProvider =
+                        context.read<TransactionProvider>();
+                      final navigator = Navigator.of(context);
                       Navigator.pop(dialogContext);
-                      await context.read<UserProfileProvider>().clearProfile();
-                      await context
-                          .read<TransactionProvider>()
-                          .clearAllTransactions();
-                      if (context.mounted) {
-                        Navigator.of(
-                          context,
-                        ).pushNamedAndRemoveUntil('/', (route) => false);
-                      }
+                      await userProfileProvider.clearProfile();
+                      await transactionProvider.clearAllTransactions();
+                      if (!mounted) return;
+                      navigator.pushNamedAndRemoveUntil('/', (route) => false);
                     },
                     child: const Text(
                       'Clear',
@@ -378,7 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.sm),
           color: isSelected
-              ? AppColors.primary.withOpacity(0.2)
+              ? AppColors.primary.withAlpha(51)
               : Colors.transparent,
           border: Border.all(
             color: isSelected ? AppColors.primary : Colors.grey.shade400,
@@ -508,7 +508,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
             ),
           ],
         ),
@@ -558,8 +558,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildDivider(bool isDark) {
     return Divider(
       color: isDark
-          ? AppColors.darkTextSecondary.withOpacity(0.1)
-          : AppColors.lightTextSecondary.withOpacity(0.1),
+          ? AppColors.darkTextSecondary.withAlpha(26)
+          : AppColors.lightTextSecondary.withAlpha(26),
       indent: AppSpacing.screenPadding,
       endIndent: AppSpacing.screenPadding,
     );

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/transaction.dart';
@@ -21,16 +22,17 @@ class GeminiService {
       throw StateError('GROQ_API_KEY is missing. Pass via --dart-define.');
     }
 
-    print('DEBUG: Using API key: ${apiKey.substring(0, 10)}...');
-    print('DEBUG: Model: llama-3.3-70b-versatile');
+    debugPrint('DEBUG: Using API key: ${apiKey.substring(0, 10)}...');
+    debugPrint('DEBUG: Model: llama-3.3-70b-versatile');
 
     final recent = _recentTransactions(transactions);
     final contextText = _buildContext(recent);
     final profileText = _buildProfileContext(profile);
 
     final systemPrompt =
-        '''
-You are BudgetBuddy's concise financial coach for students. Provide clear, actionable advice in under 120 words. Be supportive and specific. If data is missing, say so briefly.
+      '''
+  You are BudgetBuddy's concise financial coach for students. Provide clear, actionable advice in under 120 words. Be supportive and specific. If data is missing, say so briefly.
+  When appropriate, include at most one line starting with "ALERT:" and/or one line starting with "INSIGHT:" at the end. If none, omit those lines.
 
 Context (most recent ${recent.length} transactions):
 $contextText
@@ -50,7 +52,7 @@ $profileText
     };
 
     try {
-      print('DEBUG: Sending request to Groq API...');
+      debugPrint('DEBUG: Sending request to Groq API...');
       final response = await _client.post(
         Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
         headers: {
@@ -60,7 +62,7 @@ $profileText
         body: jsonEncode(requestBody),
       );
 
-      print('DEBUG: Response status: ${response.statusCode}');
+      debugPrint('DEBUG: Response status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         throw Exception(
@@ -71,11 +73,11 @@ $profileText
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final content = data['choices']?[0]?['message']?['content'] as String?;
 
-      print('DEBUG: Response received successfully');
+      debugPrint('DEBUG: Response received successfully');
       return content?.trim() ?? 'No response generated.';
     } catch (e, stack) {
-      print('DEBUG: API Error: $e');
-      print('DEBUG: Stack trace: $stack');
+      debugPrint('DEBUG: API Error: $e');
+      debugPrint('DEBUG: Stack trace: $stack');
       rethrow;
     }
   }

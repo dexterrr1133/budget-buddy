@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/settings_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import '../controllers/add_transaction_controller.dart';
 import '../widgets/transaction_type_selector.dart';
@@ -52,7 +53,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
   }
 
-  void _addTransaction() {
+  Future<void> _addTransaction() async {
     if (!_controller.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -63,47 +64,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       return;
     }
 
-    // Get the transaction provider and save the transaction
     final transactionProvider = context.read<TransactionProvider>();
 
     try {
-      transactionProvider
-          .addTransaction(
-            amount: _controller.amount,
-            category: _controller.category,
-            date: _controller.selectedDate,
-            type: _controller.isIncome ? 'income' : 'expense',
-            note: _controller.description.isEmpty
-                ? null
-                : _controller.description,
-          )
-          .then((_) {
-            // Success feedback
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${_controller.isIncome ? 'Income' : 'Expense'} added successfully',
-                ),
-                duration: const Duration(seconds: 2),
-                backgroundColor: _controller.isIncome
-                    ? AppColors.income
-                    : AppColors.expense,
-              ),
-            );
-            // Return to previous screen
-            Navigator.pop(context);
-          })
-          .catchError((e) {
-            // Error handling
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: $e'),
-                duration: const Duration(seconds: 2),
-                backgroundColor: AppColors.expense,
-              ),
-            );
-          });
+      await transactionProvider.addTransaction(
+        amount: _controller.amount,
+        category: _controller.category,
+        date: _controller.selectedDate,
+        type: _controller.isIncome ? 'income' : 'expense',
+        note: _controller.description.isEmpty ? null : _controller.description,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${_controller.isIncome ? 'Income' : 'Expense'} added successfully',
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor:
+              _controller.isIncome ? AppColors.income : AppColors.expense,
+        ),
+      );
+      Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -117,6 +101,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       backgroundColor: isDark
@@ -197,8 +182,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   TextField(
                     controller: _amountController,
                     decoration: InputDecoration(
-                      hintText: '₱0.00',
-                      prefixText: '₱ ',
+                      hintText: '${settings.currencySymbol}0.00',
+                      prefixText: '${settings.currencySymbol} ',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

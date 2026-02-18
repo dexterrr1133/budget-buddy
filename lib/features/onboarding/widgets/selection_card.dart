@@ -84,13 +84,13 @@ class _SelectionCardState extends State<SelectionCard>
             ),
             color: widget.isSelected
                 ? (isDark
-                      ? AppColors.primary.withOpacity(0.15)
-                      : AppColors.primary.withOpacity(0.08))
+                      ? AppColors.primary.withAlpha(38)
+                      : AppColors.primary.withAlpha(20))
                 : (isDark ? AppColors.darkCard : AppColors.lightCard),
             boxShadow: widget.isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withAlpha(51),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -110,7 +110,7 @@ class _SelectionCardState extends State<SelectionCard>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       color: widget.isSelected
-                          ? AppColors.primary.withOpacity(0.2)
+                        ? AppColors.primary.withAlpha(51)
                           : (isDark
                                 ? AppColors.darkCard
                                 : AppColors.lightDivider),
@@ -196,7 +196,7 @@ class _SelectionCardState extends State<SelectionCard>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: color.withOpacity(0.2),
+        color: color.withAlpha(51),
       ),
       child: Text(
         '$risk Risk',

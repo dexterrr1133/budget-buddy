@@ -1,8 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../models/user_profile_model.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Onboarding completion celebration screen
 class OnboardingCompleteScreen extends StatefulWidget {
@@ -101,7 +103,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.3),
+                                color: AppColors.primary.withAlpha(77),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -213,6 +215,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
   }
 
   Widget _buildProfileSummary(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -221,7 +224,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
         borderRadius: BorderRadius.circular(16),
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
+          color: AppColors.primary.withAlpha(51),
           width: 1.5,
         ),
       ),
@@ -247,7 +250,10 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
           _summaryItem(
             '💪 Savings',
             widget.profile.savingsAmount != null
-                ? '₱${widget.profile.savingsAmount!.toStringAsFixed(2)}'
+                ? settings.formatAmount(
+                    widget.profile.savingsAmount!,
+                    decimalDigits: settings.decimalDigits,
+                  )
                 : 'Not set',
           ),
           _summaryItem(
@@ -313,9 +319,9 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withAlpha(20),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withAlpha(26),
                   width: 1,
                 ),
               ),
@@ -350,7 +356,7 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

@@ -50,8 +50,7 @@ class AddTransactionController extends ChangeNotifier {
   bool get isValid {
     return _title.isNotEmpty &&
         _category.isNotEmpty &&
-        _amount > 0 &&
-        _selectedDate != null;
+      _amount > 0;
   }
 
   Transaction createTransaction() {

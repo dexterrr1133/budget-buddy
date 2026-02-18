@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider extends ChangeNotifier {
@@ -38,6 +39,26 @@ class SettingsProvider extends ChangeNotifier {
   String get currencySymbol => _currencySymbols[_currencyCode] ?? '\$';
 
   Map<String, String> get supportedCurrencies => _currencySymbols;
+
+  String formatAmount(double amount, {int? decimalDigits}) {
+    final formatter = NumberFormat.currency(
+      symbol: currencySymbol,
+      decimalDigits: decimalDigits ?? this.decimalDigits,
+    );
+    return formatter.format(amount);
+  }
+
+  String formatCompactAmount(double amount, {int? decimalDigits}) {
+    final sign = amount < 0 ? '-' : '';
+    final absAmount = amount.abs();
+    if (absAmount >= 1000000) {
+      return '$sign$currencySymbol${(absAmount / 1000000).toStringAsFixed(1)}M';
+    }
+    if (absAmount >= 1000) {
+      return '$sign$currencySymbol${(absAmount / 1000).toStringAsFixed(1)}K';
+    }
+    return '$sign${formatAmount(absAmount, decimalDigits: decimalDigits)}';
+  }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;

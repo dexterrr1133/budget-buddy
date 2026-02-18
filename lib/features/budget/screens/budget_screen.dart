@@ -7,6 +7,7 @@ import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
+import '../../../providers/settings_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import '../controllers/budget_controller.dart';
 import '../widgets/monthly_summary_card.dart';
@@ -26,6 +27,7 @@ class BudgetScreen extends StatefulWidget {
 class _BudgetScreenState extends State<BudgetScreen> {
   late BudgetController _controller;
   final ScrollController _scrollController = ScrollController();
+  final Map<String, double> _budgetOverrides = {};
 
   // Category definitions with icons and colors - MUST match survey category names exactly
   final Map<String, Map<String, dynamic>> categoryDefinitions = {
@@ -101,18 +103,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final profile = context.watch<UserProfileProvider>().profile;
     final txProvider = context.watch<TransactionProvider>();
+    final settings = context.watch<SettingsProvider>();
     final userName = profile?.userName ?? 'Friend';
 
     // Get data from profile survey
     final monthlyBudget = profile?.monthlyBudget ?? 50000.00;
-    final currentFunds = profile?.currentFunds ?? 0.00;
     final spendingCategories = profile?.spendingCategories ?? [];
-
-    print('DEBUG Budget Screen:');
-    print('  Profile: $profile');
-    print('  Monthly Budget: $monthlyBudget');
-    print('  Spending Categories: $spendingCategories');
-    print('  Transaction Count: ${txProvider.items.length}');
 
     // Build categories list from survey data with actual spending
     final categories = _buildCategoriesFromSurvey(
@@ -159,6 +155,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   categories,
                   monthlyBudget,
                   totalSpent,
+                  settings,
                 ),
               ),
               // Bottom spacing for FAB and nav
@@ -196,6 +193,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     List<Map<String, dynamic>> categories,
     double monthlyBudget,
     double totalSpent,
+    SettingsProvider settings,
   ) {
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
@@ -234,6 +232,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
               icon: category['icon'],
               accentColor: category['color'],
               animationDelay: 100 * (index + 1),
+              onEditBudget: () => _showBudgetEditDialog(
+                context,
+                category['name'] as String,
+                category['limit'] as double,
+                settings,
+              ),
             );
           }),
 
@@ -272,10 +276,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
           }
         }
 
+        final overrideLimit = _budgetOverrides[categoryName];
         result.add({
           'name': categoryName,
           'spent': spentAmount,
-          'limit': budgetPerCategory,
+          'limit': overrideLimit ?? budgetPerCategory,
           'icon': definition['icon'] as IconData,
           'color': definition['color'] as Color,
         });
@@ -283,6 +288,60 @@ class _BudgetScreenState extends State<BudgetScreen> {
     }
 
     return result;
+  }
+
+  Future<void> _showBudgetEditDialog(
+    BuildContext context,
+    String categoryName,
+    double currentLimit,
+    SettingsProvider settings,
+  ) async {
+    final controller = TextEditingController(
+      text: currentLimit.toStringAsFixed(settings.decimalDigits),
+    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final updated = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Edit $categoryName budget'),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              prefixText: '${settings.currencySymbol} ',
+              hintText: '0.00',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final raw = controller.text.replaceAll(',', '').trim();
+                final value = double.tryParse(raw);
+                Navigator.pop(dialogContext, value);
+              },
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  color: isDark ? AppColors.primaryLight : AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (updated == null) return;
+    setState(() {
+      _budgetOverrides[categoryName] = updated.clamp(0, double.infinity);
+    });
   }
 }
 

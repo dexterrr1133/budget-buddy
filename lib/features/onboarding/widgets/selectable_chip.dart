@@ -62,7 +62,7 @@ class _SelectableChipState extends State<SelectableChip>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               color: widget.isSelected
-                  ? AppColors.primary.withOpacity(0.15)
+                  ? AppColors.primary.withAlpha(38)
                   : (isDark ? AppColors.darkCard : AppColors.lightDivider),
               border: Border.all(
                 color: widget.isSelected
@@ -73,7 +73,7 @@ class _SelectableChipState extends State<SelectableChip>
               boxShadow: widget.isSelected
                   ? [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.2),
+                        color: AppColors.primary.withAlpha(51),
                         blurRadius: 8,
                       ),
                     ]

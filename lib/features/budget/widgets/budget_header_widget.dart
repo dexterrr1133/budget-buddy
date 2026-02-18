@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Budget header with avatar, greeting, notification bell, and filter
@@ -49,7 +52,12 @@ class _BudgetHeaderWidgetState extends State<BudgetHeaderWidget>
     return FadeTransition(
       opacity: _fadeController,
       child: Padding(
-        padding: const EdgeInsets.only(left: 20, right: 20, top: 30, bottom: 0),
+        padding: const EdgeInsets.only(
+          left: AppSpacing.screenPadding,
+          right: AppSpacing.screenPadding,
+          top: AppSpacing.headerTop,
+          bottom: 0,
+        ),
         child: Row(
           children: [
             // Avatar
@@ -74,7 +82,7 @@ class _BudgetHeaderWidgetState extends State<BudgetHeaderWidget>
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             // Greeting
             Expanded(
               child: Column(
@@ -102,26 +110,44 @@ class _BudgetHeaderWidgetState extends State<BudgetHeaderWidget>
               ),
             ),
             // Filter icon
-            IconButton(
-              onPressed: widget.onFilterTap,
-              icon: Icon(
-                Icons.tune_rounded,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppRadius.input),
+                boxShadow: AppShadows.subtle,
+              ),
+              child: IconButton(
+                onPressed: widget.onFilterTap,
+                icon: Icon(
+                  Icons.tune_rounded,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightTextPrimary,
+                ),
               ),
             ),
-            // Notification bell
+            const SizedBox(width: AppSpacing.sm),
             Stack(
               children: [
-                IconButton(
-                  onPressed: widget.onNotificationTap,
-                  icon: Icon(
-                    Icons.notifications_outlined,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
-                    size: 24,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: IconButton(
+                    onPressed: widget.onNotificationTap,
+                    icon: Icon(
+                      Icons.notifications_outlined,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                      size: 24,
+                    ),
                   ),
                 ),
                 if (widget.notificationCount > 0)
@@ -138,10 +164,9 @@ class _BudgetHeaderWidgetState extends State<BudgetHeaderWidget>
                       child: Center(
                         child: Text(
                           widget.notificationCount.toString(),
-                          style: AppTextStyles.label.copyWith(
+                          style: AppTextStyles.caption.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 10,
                           ),
                         ),
                       ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Individual category budget card with progress tracking
@@ -66,7 +69,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
 
   Color _getProgressColor() {
     if (_isOverBudget) return AppColors.expense;
-    if (_percentageUsed > 0.8) return Colors.orange;
+    if (_percentageUsed > 0.8) return AppColors.warning;
     return AppColors.income;
   }
 
@@ -85,10 +88,13 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
       child: FadeTransition(
         opacity: _slideController,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+            vertical: AppSpacing.sm,
+          ),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             border: Border.all(
               color: _isOverBudget
@@ -98,15 +104,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                         : AppColors.lightDivider),
               width: _isOverBudget ? 1.5 : 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: (isDark ? Colors.black : Colors.black).withOpacity(
-                  isDark ? 0.15 : 0.05,
-                ),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: AppShadows.card(isDark),
           ),
           child: Column(
             children: [
@@ -127,7 +125,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   // Category name and spent
                   Expanded(
                     child: Column(
@@ -142,7 +140,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                                 : AppColors.lightTextPrimary,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpacing.micro),
                         Text(
                           'Spent: ${_formatAmount(widget.amountSpent)}',
                           style: AppTextStyles.label.copyWith(
@@ -178,7 +176,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                               size: 12,
                               color: AppColors.expense,
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: AppSpacing.micro),
                             Text(
                               'Over',
                               style: AppTextStyles.label.copyWith(
@@ -192,7 +190,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               // Progress bar
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +203,7 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                         child: Container(
                           height: 6,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                             color: isDark
                                 ? AppColors.darkDivider
                                 : AppColors.lightDivider,
@@ -218,7 +216,9 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                                         .clamp(0, 1),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.xs,
+                                    ),
                                     color: _getProgressColor(),
                                     boxShadow: [
                                       BoxShadow(
@@ -238,14 +238,14 @@ class _CategoryBudgetCardState extends State<CategoryBudgetCard>
                       );
                     },
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     '${(_percentageUsed * 100).toStringAsFixed(0)}% used',
                     style: AppTextStyles.label.copyWith(
                       color: isDark
                           ? AppColors.darkTextSecondary
                           : AppColors.lightTextSecondary,
-                      fontSize: 11,
+                      fontSize: AppTextStyles.captionSmall.fontSize,
                     ),
                   ),
                 ],

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../models/financial_profile.dart';
+import '../models/user_profile_model.dart';
 
 /// Controller to manage survey state and navigation
 class SurveyController extends ChangeNotifier {
   final PageController pageController = PageController();
   int _currentStep = 0;
-  late FinancialProfile _profile = FinancialProfile();
+  late UserProfileModel _profile = const UserProfileModel();
 
   int get currentStep => _currentStep;
-  FinancialProfile get profile => _profile;
+  UserProfileModel get profile => _profile;
   double get progress => (_currentStep + 1) / 9; // 9 total steps
 
   final List<String> steps = [
@@ -61,12 +61,12 @@ class SurveyController extends ChangeNotifier {
   }
 
   void updateExpenseCategories(List<String> categories) {
-    _profile = _profile.copyWith(expenseCategories: categories);
+    _profile = _profile.copyWith(spendingCategories: categories);
     notifyListeners();
   }
 
-  void updateSpendingStyle(String style) {
-    _profile = _profile.copyWith(spendingStyle: style);
+  void updatePreferredAdviceTone(String tone) {
+    _profile = _profile.copyWith(preferredAdviceTone: tone);
     notifyListeners();
   }
 
@@ -75,8 +75,8 @@ class SurveyController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateInvestmentRisk(String risk) {
-    _profile = _profile.copyWith(investmentRisk: risk);
+  void updateRiskTolerance(String risk) {
+    _profile = _profile.copyWith(riskTolerance: risk);
     notifyListeners();
   }
 
@@ -112,6 +112,11 @@ class SurveyController extends ChangeNotifier {
 
   void updateDebtsAmount(double amount) {
     _profile = _profile.copyWith(debtsAmount: amount);
+    notifyListeners();
+  }
+
+  void updateMonthlyBudget(double amount) {
+    _profile = _profile.copyWith(monthlyBudget: amount);
     notifyListeners();
   }
 

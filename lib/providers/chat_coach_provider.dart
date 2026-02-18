@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/transaction.dart';
 import '../services/groq.dart';
+import '../features/onboarding/models/user_profile_model.dart';
 
 class ChatMessage {
   const ChatMessage({required this.role, required this.text});
@@ -12,7 +13,7 @@ class ChatMessage {
 
 class ChatCoachProvider extends ChangeNotifier {
   ChatCoachProvider({GeminiService? service})
-      : _geminiService = service ?? GeminiService();
+    : _geminiService = service ?? GeminiService();
 
   final GeminiService _geminiService;
 
@@ -27,6 +28,7 @@ class ChatCoachProvider extends ChangeNotifier {
   Future<void> sendMessage({
     required String userMessage,
     required List<TransactionModel> transactions,
+    UserProfileModel? profile,
   }) async {
     if (userMessage.trim().isEmpty) return;
     _messages.add(ChatMessage(role: 'user', text: userMessage.trim()));
@@ -38,6 +40,7 @@ class ChatCoachProvider extends ChangeNotifier {
       final reply = await _geminiService.getCoachReply(
         userMessage: userMessage,
         transactions: transactions,
+        profile: profile,
       );
       _messages.add(ChatMessage(role: 'assistant', text: reply));
     } catch (e) {

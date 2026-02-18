@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Alert and Insight cards side by side
@@ -59,7 +62,10 @@ class _AlertInsightCardsState extends State<AlertInsightCards>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.md,
+      ),
       child: Row(
         children: [
           // Alert Card
@@ -91,7 +97,7 @@ class _AlertInsightCardsState extends State<AlertInsightCards>
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           // Insight Card
           Expanded(
             child: SlideTransition(
@@ -140,26 +146,12 @@ class _AlertInsightCardsState extends State<AlertInsightCards>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           color: backgroundColor,
           border: Border.all(color: borderColor, width: 1.5),
-          boxShadow: isDark
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          boxShadow: AppShadows.card(isDark),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +168,7 @@ class _AlertInsightCardsState extends State<AlertInsightCards>
                   ),
                   child: Icon(icon, color: iconColor, size: 16),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   title,
                   style: AppTextStyles.label.copyWith(
@@ -186,7 +178,7 @@ class _AlertInsightCardsState extends State<AlertInsightCards>
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             // Message
             Text(
               message,

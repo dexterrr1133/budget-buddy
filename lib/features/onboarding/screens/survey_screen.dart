@@ -1,11 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../core/theme/radius.dart';
 import '../controllers/survey_controller.dart';
+import '../providers/user_profile_provider.dart';
 import '../widgets/animated_progress_indicator.dart';
 import '../widgets/selection_card.dart';
 import '../widgets/selectable_chip.dart';
 import 'onboarding_complete_screen.dart';
+
+/// Custom formatter to add commas to numbers
+class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Remove all non-digit characters except decimal point
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (newText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    // Split by decimal point
+    final parts = newText.split('.');
+    String integerPart = parts[0];
+    String decimalPart = parts.length > 1 ? '.${parts[1]}' : '';
+
+    // Add commas to integer part
+    final buffer = StringBuffer();
+    for (int i = 0; i < integerPart.length; i++) {
+      if (i > 0 && (integerPart.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(integerPart[i]);
+    }
+
+    final formattedText = buffer.toString() + decimalPart;
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
 
 /// Main survey screen with multi-step onboarding
 class SurveyScreen extends StatefulWidget {
@@ -148,8 +191,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 32),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱0.00',
-                prefixText: '₱ ',
+                hintText: '₱ 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -159,8 +201,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     : AppColors.lightCard,
               ),
               keyboardType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
               onChanged: (value) {
-                final amount = double.tryParse(value) ?? 0.0;
+                final cleanValue = value.replaceAll(',', '');
+                final amount = double.tryParse(cleanValue) ?? 0.0;
                 _controller.updateCurrentFunds(amount);
               },
             ),
@@ -204,7 +248,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱0.00',
+                hintText: '₱ 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -214,8 +258,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     : AppColors.lightCard,
               ),
               keyboardType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
               onChanged: (value) {
-                final amount = double.tryParse(value) ?? 0.0;
+                final cleanValue = value.replaceAll(',', '');
+                final amount = double.tryParse(cleanValue) ?? 0.0;
                 _controller.updateSavingsAmount(amount);
               },
             ),
@@ -230,7 +276,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             const SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(
-                hintText: '₱0.00',
+                hintText: '₱ 0.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -240,37 +286,68 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     : AppColors.lightCard,
               ),
               keyboardType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
               onChanged: (value) {
-                final amount = double.tryParse(value) ?? 0.0;
+                final cleanValue = value.replaceAll(',', '');
+                final amount = double.tryParse(cleanValue) ?? 0.0;
                 _controller.updateInvestmentsAmount(amount);
               },
             ),
             const SizedBox(height: 20),
-            // Debts amount
             Text(
-              'Debts Amount (₱)',
+              'Do you currently have debt?',
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: '₱0.00',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.darkCard
                     : AppColors.lightCard,
               ),
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                final amount = double.tryParse(value) ?? 0.0;
-                _controller.updateDebtsAmount(amount);
-              },
+              child: SwitchListTile(
+                title: Text(
+                  _controller.profile.hasDebt ? 'Yes' : 'No',
+                  style: AppTextStyles.bodyMedium,
+                ),
+                value: _controller.profile.hasDebt,
+                onChanged: _controller.updateHasDebt,
+                activeColor: AppColors.primary,
+              ),
             ),
+            if (_controller.profile.hasDebt) ...[
+              const SizedBox(height: 20),
+              // Debts amount
+              Text(
+                'Debts Amount (₱)',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: InputDecoration(
+                  hintText: '₱ 0.00',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkCard
+                      : AppColors.lightCard,
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [ThousandsSeparatorInputFormatter()],
+                onChanged: (value) {
+                  final cleanValue = value.replaceAll(',', '');
+                  final amount = double.tryParse(cleanValue) ?? 0.0;
+                  _controller.updateDebtsAmount(amount);
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -366,12 +443,12 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 return SelectableChip(
                   label: label,
                   emoji: emoji,
-                  isSelected: _controller.profile.expenseCategories.contains(
+                  isSelected: _controller.profile.spendingCategories.contains(
                     label,
                   ),
                   onTap: () {
                     final updated = List<String>.from(
-                      _controller.profile.expenseCategories,
+                      _controller.profile.spendingCategories,
                     );
                     if (updated.contains(label)) {
                       updated.remove(label);
@@ -397,30 +474,39 @@ class _SurveyScreenState extends State<SurveyScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'What\'s your spending style?',
+              'How should we tailor advice?',
               style: AppTextStyles.headlineMedium.copyWith(
                 fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose the tone that feels most helpful',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 32),
             ...[
               (
-                'Saver',
-                'I prefer saving money and buying only essentials',
+                'Direct',
+                'Straight to the point with clear next steps',
                 Icons.savings,
-                'Low',
+                'Focused',
               ),
               (
-                'Balanced',
-                'I save regularly but also enjoy some spending',
+                'Encouraging',
+                'Supportive and motivating guidance',
                 Icons.scale,
-                'Medium',
+                'Supportive',
               ),
               (
-                'Spender',
-                'I enjoy spending now and worry about it later',
+                'Detailed',
+                'Deeper explanations with context',
                 Icons.shopping_bag,
-                'High',
+                'Insightful',
               ),
             ].map((item) {
               final (title, description, icon, risk) = item;
@@ -431,10 +517,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   description: description,
                   icon: icon,
                   riskLevel: risk,
-                  isSelected: _controller.profile.spendingStyle == title,
-                  onTap: () => _controller.updateSpendingStyle(title),
-                  learnMore:
-                      'Understanding your spending habits helps us create a personalized budget plan that works for you.',
+                  isSelected: _controller.profile.preferredAdviceTone == title,
+                  onTap: () => _controller.updatePreferredAdviceTone(title),
+                  learnMore: 'We will match recommendations to this style.',
                 ),
               );
             }).toList(),
@@ -554,8 +639,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   description: description,
                   icon: icon,
                   riskLevel: risk,
-                  isSelected: _controller.profile.investmentRisk == title,
-                  onTap: () => _controller.updateInvestmentRisk(title),
+                  isSelected: _controller.profile.riskTolerance == title,
+                  onTap: () => _controller.updateRiskTolerance(title),
                   learnMore: learnMore,
                 ),
               );
@@ -594,20 +679,16 @@ class _SurveyScreenState extends State<SurveyScreen> {
               _controller.profile.incomeRange ?? 'Not set',
             ),
             _buildReviewItem(
-              'Spending Style',
-              _controller.profile.spendingStyle ?? 'Not set',
+              'Advice Tone',
+              _controller.profile.preferredAdviceTone ?? 'Not set',
             ),
             _buildReviewItem(
-              'Investment Risk',
-              _controller.profile.investmentRisk ?? 'Not set',
-            ),
-            _buildReviewItem(
-              'Savings Habit',
-              _controller.profile.savingsHabit ?? 'Not set',
+              'Risk Tolerance',
+              _controller.profile.riskTolerance ?? 'Not set',
             ),
             _buildReviewItem(
               'Expense Categories',
-              _controller.profile.expenseCategories.join(', '),
+              _controller.profile.spendingCategories.join(', '),
             ),
             _buildReviewItem(
               'Financial Goals',
@@ -618,36 +699,43 @@ class _SurveyScreenState extends State<SurveyScreen> {
               _controller.profile.hasDebt ? 'Yes' : 'No',
             ),
             const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.celebration, color: Colors.white, size: 40),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Profile Complete!',
-                    style: AppTextStyles.headlineMedium.copyWith(
+
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.celebration,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      size: 40,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your personalized financial advisor is ready',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white70,
+                    const SizedBox(height: 12),
+                    Text(
+                      'Profile Complete!',
+                      style: AppTextStyles.headlineMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your personalized financial advisor is ready',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -707,8 +795,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
         Expanded(
           child: ElevatedButton(
             onPressed: isLastStep
-                ? () {
-                    // Navigate to completion screen
+                ? () async {
+                    await context.read<UserProfileProvider>().setProfile(
+                      _controller.profile,
+                    );
+                    if (!context.mounted) return;
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => OnboardingCompleteScreen(
@@ -722,7 +813,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               backgroundColor: AppColors.primary,
             ),
-            child: Text(isLastStep ? 'Complete' : 'Next'),
+            child: Text(
+              isLastStep ? 'Complete' : 'Next',
+              style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+            ),
           ),
         ),
         if (!isLastStep && _controller.currentStep < 6) ...[

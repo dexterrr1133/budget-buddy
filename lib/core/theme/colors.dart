@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-
   // Brand
   static const primary = Color(0xFF1FA971);
   static const primaryDark = Color(0xFF157A52);
@@ -33,8 +32,10 @@ class AppColors {
   static const income = Color(0xFF22C55E);
   static const expense = Color(0xFFEF4444);
   static const savings = Color(0xFF3B82F6);
+  static const warning = Color(0xFFF59E0B);
 
   // Shadows
   static const shadowLight = Color(0x14000000);
   static const shadowDark = Color(0x66000000);
+  static const primaryShadow = Color(0x4D1FA971);
 }

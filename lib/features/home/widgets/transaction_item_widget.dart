@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../core/theme/radius.dart';
+import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 
 /// Individual transaction item for recent activity list
@@ -65,10 +68,13 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
       child: FadeTransition(
         opacity: _slideController,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+            vertical: AppSpacing.sm,
+          ),
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             border: Border.all(
               color: isDark
@@ -76,15 +82,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                   : AppColors.lightDivider,
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: (isDark ? Colors.black : Colors.black).withOpacity(
-                  isDark ? 0.15 : 0.05,
-                ),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: AppShadows.card(isDark),
           ),
           child: Row(
             children: [
@@ -98,7 +96,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                 ),
                 child: Icon(widget.icon, color: amountColor, size: 20),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               // Title and category
               Expanded(
                 child: Column(
@@ -116,7 +114,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.micro),
                     Row(
                       children: [
                         Text(
@@ -127,7 +125,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                                 : AppColors.lightTextSecondary,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Text(
                           '•',
                           style: AppTextStyles.label.copyWith(
@@ -136,7 +134,7 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                                 : AppColors.lightTextSecondary,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Text(
                           widget.date,
                           style: AppTextStyles.label.copyWith(
@@ -150,12 +148,11 @@ class _TransactionItemWidgetState extends State<TransactionItemWidget>
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               // Amount
               Text(
                 '${widget.isIncome ? '+' : '-'}${_formatAmount(widget.amount)}',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.transactionAmount.copyWith(
                   color: amountColor,
                 ),
                 textAlign: TextAlign.right,

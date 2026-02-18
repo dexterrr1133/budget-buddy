@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
-import '../../../core/theme/text_styles.dart';
 import '../../../core/theme/shadows.dart';
+import '../../../core/theme/spacing.dart';
+import '../../../core/theme/text_styles.dart';
 
 /// Header widget with greeting and notification
 class HomeHeaderWidget extends StatefulWidget {
   final String userName;
   final int notificationCount;
   final VoidCallback onNotificationTap;
+  final String? personalizedGreeting;
 
   const HomeHeaderWidget({
     required this.userName,
     this.notificationCount = 0,
     required this.onNotificationTap,
+    this.personalizedGreeting,
     super.key,
   });
 
@@ -49,9 +52,9 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
       opacity: _fadeController,
       child: Padding(
         padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 30,
+          left: AppSpacing.screenPadding,
+          right: AppSpacing.screenPadding,
+          top: AppSpacing.headerTop,
           bottom: 0,
         ),
         child: Row(
@@ -84,7 +87,7 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Welcome back,',
@@ -93,15 +96,19 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                           ? AppColors.darkTextSecondary
                           : AppColors.lightTextSecondary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     widget.userName,
-                    style: AppTextStyles.bodyLarge.copyWith(
+                    style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isDark
                           ? AppColors.darkTextPrimary
                           : AppColors.lightTextPrimary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -133,10 +140,9 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                       child: Center(
                         child: Text(
                           widget.notificationCount.toString(),
-                          style: AppTextStyles.label.copyWith(
+                          style: AppTextStyles.caption.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 10,
                           ),
                         ),
                       ),

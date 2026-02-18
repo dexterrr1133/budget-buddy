@@ -6,6 +6,7 @@ import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../providers/transaction_provider.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -193,8 +194,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildInfoTile(isDark, 'Version', '1.0.0'),
             _buildDivider(isDark),
             _buildInfoTile(isDark, 'Build', '42'),
+            _buildDivider(isDark),
+
+            // Data & Privacy Section
+            _buildSectionHeader('Data & Privacy', isDark),
+            _buildClearProfileTile(isDark, context),
             const SizedBox(height: AppSpacing.xxl),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClearProfileTile(bool isDark, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.md,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          boxShadow: AppShadows.subtle,
+        ),
+        child: ListTile(
+          title: Text(
+            'Clear Profile',
+            style: AppTextStyles.label.copyWith(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Text(
+            'Remove all data and restart onboarding',
+            style: AppTextStyles.captionSmall.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          trailing: const Icon(Icons.delete_outline, color: Colors.red),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: const Text('Clear All Data?'),
+                content: const Text(
+                  'This will permanently delete your profile and transaction data. You\'ll need to complete onboarding again.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(dialogContext);
+                      await context.read<UserProfileProvider>().clearProfile();
+                      await context
+                          .read<TransactionProvider>()
+                          .clearAllTransactions();
+                      if (context.mounted) {
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/', (route) => false);
+                      }
+                    },
+                    child: const Text(
+                      'Clear',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

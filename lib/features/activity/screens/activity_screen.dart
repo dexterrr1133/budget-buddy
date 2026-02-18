@@ -7,14 +7,15 @@ import '../../../core/theme/shadows.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../features/home/widgets/modern_bottom_nav_bar.dart';
+import '../../../features/home/widgets/floating_add_button.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
 import '../providers/activity_provider.dart';
-import '../widgets/activity_fab.dart';
 import '../widgets/activity_filter_button.dart';
 import '../widgets/activity_search_bar.dart';
 import '../widgets/transaction_group.dart';
+import '../../transaction/screens/add_transaction_modal.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -71,6 +72,126 @@ class _ActivityScreenState extends State<ActivityScreen> {
     }
   }
 
+  void _showFilterDialog(
+    BuildContext context,
+    ActivityProvider activityProvider,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Filter Transactions',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Type',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterChip(
+                    'All',
+                    activityProvider.typeFilter == 'all',
+                    () => activityProvider.setTypeFilter('all'),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    'Income',
+                    activityProvider.typeFilter == 'income',
+                    () => activityProvider.setTypeFilter('income'),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    'Expense',
+                    activityProvider.typeFilter == 'expense',
+                    () => activityProvider.setTypeFilter('expense'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Time Range',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterChip(
+                    'All Time',
+                    activityProvider.daysFilter == 0,
+                    () => activityProvider.setDaysFilter(0),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    'Last 7 days',
+                    activityProvider.daysFilter == 7,
+                    () => activityProvider.setDaysFilter(7),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    'Last 30 days',
+                    activityProvider.daysFilter == 30,
+                    () => activityProvider.setDaysFilter(30),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                    'Last 90 days',
+                    activityProvider.daysFilter == 90,
+                    () => activityProvider.setDaysFilter(90),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.grey[300],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<UserProfileProvider>().profile;
@@ -82,6 +203,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Stack(
           children: [
             CustomScrollView(
@@ -113,11 +235,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         const SizedBox(width: AppSpacing.md),
                         ActivityFilterButton(
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Filter options coming soon'),
-                              ),
-                            );
+                            _showFilterDialog(context, activityProvider);
                           },
                         ),
                       ],
@@ -159,12 +277,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
               left: 0,
               right: 0,
               child: Center(
-                child: ActivityFab(
+                child: FloatingAddButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Add transaction feature coming soon'),
-                      ),
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => const AddTransactionModal(),
                     );
                   },
                 ),

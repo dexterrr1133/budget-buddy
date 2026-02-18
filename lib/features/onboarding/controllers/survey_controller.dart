@@ -9,11 +9,12 @@ class SurveyController extends ChangeNotifier {
 
   int get currentStep => _currentStep;
   UserProfileModel get profile => _profile;
-  double get progress => (_currentStep + 1) / 9; // 9 total steps
+  double get progress => (_currentStep + 1) / 10; // 10 total steps
 
   final List<String> steps = [
     'Your Name',
     'Current Funds',
+    'Monthly Budget',
     'Financial Summary',
     'Income Range',
     'Expense Categories',

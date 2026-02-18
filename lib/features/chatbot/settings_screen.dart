@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/settings_provider.dart';
+import '../../features/onboarding/providers/user_profile_provider.dart';
+import '../../providers/transaction_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -9,15 +11,77 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final profile = context.watch<UserProfileProvider>().profile;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
+          // Profile Section
+          if (profile != null) ...[
+            _SectionTitle(title: 'Profile'),
+            _SettingsCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    title: const Text('Name'),
+                    subtitle: Text(profile.userName ?? 'Not set'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    title: const Text('Monthly Budget'),
+                    subtitle: Text(
+                      profile.monthlyBudget != null
+                          ? '₱${profile.monthlyBudget!.toStringAsFixed(2)}'
+                          : 'Not set',
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    title: const Text('Current Funds'),
+                    subtitle: Text(
+                      profile.currentFunds != null
+                          ? '₱${profile.currentFunds!.toStringAsFixed(2)}'
+                          : 'Not set',
+                    ),
+                  ),
+                  if (profile.savingsAmount != null) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Savings'),
+                      subtitle: Text(
+                        '₱${profile.savingsAmount!.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  ],
+                  if (profile.investmentsAmount != null &&
+                      profile.investmentsAmount! > 0) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Investments'),
+                      subtitle: Text(
+                        '₱${profile.investmentsAmount!.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  ],
+                  if (profile.debtsAmount != null &&
+                      profile.debtsAmount! > 0) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Debts'),
+                      subtitle: Text(
+                        '₱${profile.debtsAmount!.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           _SectionTitle(title: 'Appearance'),
           _SettingsCard(
             child: Column(
@@ -28,9 +92,18 @@ class SettingsScreen extends StatelessWidget {
                   trailing: DropdownButton<ThemeMode>(
                     value: settings.themeMode,
                     items: const [
-                      DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
-                      DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
-                      DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('System'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark'),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value != null) settings.setThemeMode(value);
@@ -52,15 +125,15 @@ class SettingsScreen extends StatelessWidget {
           _SettingsCard(
             child: ListTile(
               title: const Text('Preferred currency'),
-              subtitle: Text('Current: ${settings.currencyCode} ${settings.currencySymbol}'),
+              subtitle: Text(
+                'Current: ${settings.currencyCode} ${settings.currencySymbol}',
+              ),
               trailing: DropdownButton<String>(
                 value: settings.currencyCode,
                 items: settings.supportedCurrencies.keys
                     .map(
-                      (code) => DropdownMenuItem(
-                        value: code,
-                        child: Text(code),
-                      ),
+                      (code) =>
+                          DropdownMenuItem(value: code, child: Text(code)),
                     )
                     .toList(),
                 onChanged: (value) {
@@ -115,6 +188,52 @@ class SettingsScreen extends StatelessWidget {
               subtitle: const Text('Calendar and summary views'),
               value: settings.startWeekOnMonday,
               onChanged: settings.setStartWeekOnMonday,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _SectionTitle(title: 'Data & Privacy'),
+          _SettingsCard(
+            child: ListTile(
+              title: const Text('Clear Profile'),
+              subtitle: const Text('Remove all data and restart onboarding'),
+              trailing: const Icon(Icons.delete_outline, color: Colors.red),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Clear All Data?'),
+                    content: const Text(
+                      'This will permanently delete your profile and transaction data. You\'ll need to complete onboarding again.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await context
+                              .read<UserProfileProvider>()
+                              .clearProfile();
+                          await context
+                              .read<TransactionProvider>()
+                              .clearAllTransactions();
+                          if (context.mounted) {
+                            Navigator.of(
+                              context,
+                            ).pushNamedAndRemoveUntil('/', (route) => false);
+                          }
+                        },
+                        child: const Text(
+                          'Clear',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
